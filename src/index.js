@@ -4,6 +4,7 @@ import productosRoutes from "./routes/productos.routes.js";
 
 const app = express();
 
+app.use(express.json());
 app.use(productosRoutes);
 
 // Asignación de puerto importada desde config.js
