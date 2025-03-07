@@ -4,14 +4,16 @@ import {
   createProducto,
   getProducto,
   getProductos,
+  getProductosDetalles,
   putProducto,
 } from "../controllers/productos.controllers.js";
 
 const router = Router();
 
-router.get("/productos", getProductos); // Pedir todos los productos
-router.get("/productos/:productoId", getProducto); // Pedir un producto
-router.post("/productos", createProducto); // Crear un producto
-router.put("/productos/:productoId", putProducto); // Actualizar un producto
+router.get("/", getProductos); // Pedir todos los productos
+router.get("/:productoId", getProducto); // Pedir un producto
+router.get("/detalles", getProductosDetalles); // Pedir detalles completos de los productos
+router.post("/", createProducto); // Crear un producto
+router.put("/:productoId", putProducto); // Actualizar un producto
 
 export default router;

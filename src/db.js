@@ -16,6 +16,6 @@ export const pool = new pg.Pool({
 });
 
 // Para comprobar si la conexión funciona, pidiendo una simple fecha
-pool.query("SELECT NOW()").then((result) => {
-  console.log(result);
-});
+// pool.query("SELECT NOW()").then((result) => {
+//  console.log(result);
+// });
