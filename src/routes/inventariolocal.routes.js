@@ -8,9 +8,9 @@ import {
 
 const router = Router();
 
-router.get("/inventariolocal", getInventarioLocal); // Obtener todo el inventario local
-router.get("/inventariolocal/sede/:sedeId", getInventarioLocalBySede); // Obtener inventario por sede
-router.post("/inventariolocal", createInventarioLocal); // Crear un nuevo registro de inventario local
-router.put("/inventariolocal/:inventariolocalId", updateInventarioLocal); // Actualizar un registro de inventario local
+router.get("/", getInventarioLocal); // Obtener todo el inventario local
+router.get("/sede/:sedeId", getInventarioLocalBySede); // Obtener inventario por sede
+router.post("/", createInventarioLocal); // Crear un nuevo registro de inventario local
+router.put("/:inventariolocalId", updateInventarioLocal); // Actualizar un registro de inventario local
 
 export default router;

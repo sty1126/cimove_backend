@@ -16,7 +16,7 @@ export const getInventarioLocalBySede = async (req, res) => {
   const { sedeId } = req.params;
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM inventariolocal WHERE id_sede_inventariolocal = $1",
+      "SELECT i.*, COALESCE(i.existencia_inventariolocal, 0) AS existencia_producto, p.* FROM INVENTARIOLOCAL i JOIN PRODUCTO p ON i.id_producto_inventariolocal = p.id_producto WHERE i.id_sede_inventariolocal = $1;",
       [sedeId]
     );
     if (rows.length === 0) {
