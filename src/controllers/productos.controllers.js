@@ -28,21 +28,21 @@ export const getProducto = async (req, res) => {
 
 export const getProductosDetalles = async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT 
-        p.ID_PRODUCTO AS id_producto,
-        c.DESCRIPCION_CATEGORIA AS categoria,
-        p.NOMBRE_PRODUCTO AS nombre,
-        p.DESCRIPCION_PRODUCTO AS descripcion,
-        p.PRECIOVENTAACT_PRODUCTO AS precio,
-        p.COSTOVENTA_PRODUCTO AS costo_venta,
-        p.VALORIVA_PRODUCTO AS iva,
-        COALESCE(i.EXISTENCIA_INVENTARIO, 0) AS existencia
-      FROM PRODUCTO p
-      JOIN CATEGORIA c ON p.ID_CATEGORIA_PRODUCTO = c.ID_CATEGORIA
-      LEFT JOIN INVENTARIO i ON p.ID_PRODUCTO = i.ID_PRODUCTO_INVENTARIO
-      WHERE p.ESTADO_PRODUCTO = 'A' AND (i.ESTADO_INVENTARIO IS NULL OR i.ESTADO_INVENTARIO = 'A')
+    const { rows } = await pool.query(`
+        SELECT 
+          p.*,
+          c.DESCRIPCION_CATEGORIA AS categoria,
+          COALESCE(i.EXISTENCIA_INVENTARIO, 0) AS existencia_producto
+        FROM PRODUCTO p
+        JOIN CATEGORIA c ON p.ID_CATEGORIA_PRODUCTO = c.ID_CATEGORIA
+        LEFT JOIN INVENTARIO i ON p.ID_PRODUCTO = i.ID_PRODUCTO_INVENTARIO
+        WHERE p.ESTADO_PRODUCTO = 'A' 
+        AND (i.ESTADO_INVENTARIO IS NULL OR i.ESTADO_INVENTARIO = 'A');
     `);
+
+    if (!rows || !Array.isArray(rows)) {
+      return res.status(500).json({ error: "Error al obtener los productos" });
+    }
 
     res.json(rows);
   } catch (error) {
@@ -67,6 +67,8 @@ export const createProducto = async (req, res) => {
   } = req.body;
 
   try {
+    console.log("Datos recibidos:", req.body);
+
     const result = await pool.query(
       `INSERT INTO producto (id_producto, id_categoria_producto, nombre_producto, descripcion_producto, 
       precioventaact_producto, costoventa_producto, margenutilidad_producto, 

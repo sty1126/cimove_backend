@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { pool } from "../db.js";
 import {
   createProducto,
   getProducto,
@@ -10,9 +9,9 @@ import {
 
 const router = Router();
 
-router.get("/", getProductos); // Pedir todos los productos
-router.get("/:productoId", getProducto); // Pedir un producto
-router.get("/detalles", getProductosDetalles); // Pedir detalles completos de los productos
+router.get("/", getProductos); // Obtener todos los productos
+router.get("/detalles", getProductosDetalles); // Obtener detalles completos de productos (SIN PARAMETROS)
+router.get("/:productoId", getProducto); // Obtener un producto por ID
 router.post("/", createProducto); // Crear un producto
 router.put("/:productoId", putProducto); // Actualizar un producto
 
