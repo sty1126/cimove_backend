@@ -122,3 +122,29 @@ export const updateInventarioLocal = async (req, res) => {
       .json({ message: "Error al actualizar el inventario local" });
   }
 };
+
+// Añadir stock a una sede y actualizar el inventario general
+export const addStockToSede = async (req, res) => {
+  const { idProducto, idSede, cantidad } = req.body;
+  try {
+    await pool.query("BEGIN");
+
+    // Actualizar inventario local
+    await pool.query(
+      "UPDATE INVENTARIOLOCAL SET EXISTENCIA_INVENTARIOLOCAL = EXISTENCIA_INVENTARIOLOCAL + $1 WHERE ID_PRODUCTO_INVENTARIOLOCAL = $2 AND ID_SEDE_INVENTARIOLOCAL = $3",
+      [cantidad, idProducto, idSede]
+    );
+
+    // Actualizar inventario general
+    await pool.query(
+      "UPDATE INVENTARIO SET EXISTENCIA_INVENTARIO = EXISTENCIA_INVENTARIO + $1 WHERE ID_PRODUCTO_INVENTARIO = $2",
+      [cantidad, idProducto]
+    );
+
+    await pool.query("COMMIT");
+    res.json({ message: "Stock añadido exitosamente" });
+  } catch (err) {
+    await pool.query("ROLLBACK");
+    res.status(500).json({ error: "Error al actualizar stock" });
+  }
+};

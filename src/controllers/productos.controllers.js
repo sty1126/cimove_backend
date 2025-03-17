@@ -97,7 +97,7 @@ export const putProducto = async (req, res) => {
   const nuevosDatos = req.body;
 
   try {
-    // Obtener el producto actual
+    // Verificar si el producto existe
     const { rows } = await pool.query(
       "SELECT * FROM producto WHERE id_producto = $1",
       [productoId]
@@ -107,33 +107,32 @@ export const putProducto = async (req, res) => {
       return res.status(404).json({ message: "Producto no encontrado" });
     }
 
-    // Producto actual en la base de datos
     const productoActual = rows[0];
 
-    // Fusionar los datos actuales con los nuevos, priorizando los nuevos
+    // Fusionar los datos actuales con los nuevos
     const datosActualizados = {
       id_categoria_producto:
-        nuevosDatos.id_categoria_producto ||
+        nuevosDatos.id_categoria_producto ??
         productoActual.id_categoria_producto,
       nombre_producto:
-        nuevosDatos.nombre_producto || productoActual.nombre_producto,
+        nuevosDatos.nombre_producto ?? productoActual.nombre_producto,
       descripcion_producto:
-        nuevosDatos.descripcion_producto || productoActual.descripcion_producto,
+        nuevosDatos.descripcion_producto ?? productoActual.descripcion_producto,
       precioventaact_producto:
-        nuevosDatos.precioventaact_producto ||
+        nuevosDatos.precioventaact_producto ??
         productoActual.precioventaact_producto,
       precioventaant_producto:
-        nuevosDatos.precioventaant_producto ||
+        nuevosDatos.precioventaant_producto ??
         productoActual.precioventaant_producto,
       costoventa_producto:
-        nuevosDatos.costoventa_producto || productoActual.costoventa_producto,
+        nuevosDatos.costoventa_producto ?? productoActual.costoventa_producto,
       margenutilidad_producto:
-        nuevosDatos.margenutilidad_producto ||
+        nuevosDatos.margenutilidad_producto ??
         productoActual.margenutilidad_producto,
       valoriva_producto:
-        nuevosDatos.valoriva_producto || productoActual.valoriva_producto,
+        nuevosDatos.valoriva_producto ?? productoActual.valoriva_producto,
       estado_producto:
-        nuevosDatos.estado_producto || productoActual.estado_producto, // Nuevo campo
+        nuevosDatos.estado_producto ?? productoActual.estado_producto,
     };
 
     // Ejecutar la actualización
@@ -158,9 +157,74 @@ export const putProducto = async (req, res) => {
       ]
     );
 
-    res.json(result.rows[0]); // Devolver el producto actualizado
+    // Responder con el producto actualizado
+    res.json({
+      message: "Producto actualizado correctamente",
+      producto: result.rows[0],
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al actualizar el producto" });
+    console.error("Error al actualizar producto:", error);
+    res.status(500).json({
+      message: "Error al actualizar el producto",
+      error: error.message,
+    });
+  }
+};
+
+export const getProductoDetalle = async (req, res) => {
+  console.log("Parámetros recibidos:", req.params); // <-- DEBUG
+
+  const { productoId } = req.params;
+
+  if (!productoId) {
+    return res.status(400).json({ message: "Falta el ID del producto" });
+  }
+
+  try {
+    const productoQuery = `
+      SELECT 
+        p.*, 
+        c.DESCRIPCION_CATEGORIA AS categoria,
+        COALESCE(i.EXISTENCIA_INVENTARIO, 0) AS existencia_total
+      FROM PRODUCTO p
+      JOIN CATEGORIA c ON p.ID_CATEGORIA_PRODUCTO = c.ID_CATEGORIA
+      LEFT JOIN INVENTARIO i ON p.ID_PRODUCTO = i.ID_PRODUCTO_INVENTARIO
+      WHERE p.ID_PRODUCTO = $1;
+    `;
+
+    const inventarioLocalQuery = `
+      SELECT 
+        il.ID_SEDE_INVENTARIOLOCAL AS sede_id,
+        il.EXISTENCIA_INVENTARIOLOCAL AS existencia,
+        il.STOCKMINIMO_INVENTARIOLOCAL AS stock_minimo,
+        il.STOCKMAXIMO_INVENTARIOLOCAL AS stock_maximo,
+        s.NOMBRE_SEDE AS sede_nombre
+      FROM INVENTARIOLOCAL il
+      JOIN SEDE s ON il.ID_SEDE_INVENTARIOLOCAL = s.ID_SEDE
+      WHERE il.ID_PRODUCTO_INVENTARIOLOCAL = $1;
+    `;
+
+    console.log("Producto ID recibido:", productoId); // <-- DEBUG
+
+    const { rows: productoRows } = await pool.query(productoQuery, [
+      parseInt(productoId), // Asegurar que es un número entero
+    ]);
+    const { rows: inventarioRows } = await pool.query(inventarioLocalQuery, [
+      parseInt(productoId),
+    ]);
+
+    if (productoRows.length === 0) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    const producto = productoRows[0];
+    producto.inventario_sedes = inventarioRows;
+
+    res.json(producto);
+  } catch (error) {
+    console.error("Error al obtener detalles del producto:", error);
+    res
+      .status(500)
+      .json({ message: "Error al obtener los detalles del producto" });
   }
 };
