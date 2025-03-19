@@ -7,6 +7,7 @@ import {
   getProductosDetalles,
   getProductoDetalle,
   putProducto,
+  deleteProducto,
 } from "../controllers/productos.controllers.js";
 
 const router = Router();
@@ -17,5 +18,6 @@ router.get("/detalle/:productoId", getProductoDetalle);
 router.get("/:productoId", getProducto); // Obtener un producto por ID
 router.post("/", createProducto); // Crear un producto
 router.put("/:productoId", putProducto); // Actualizar un producto
+router.put("/eliminar/:id", deleteProducto); // Eliminar un proveedor
 
 export default router;

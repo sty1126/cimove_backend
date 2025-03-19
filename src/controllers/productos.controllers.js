@@ -3,7 +3,9 @@ import { pool } from "../db.js";
 // Obtener todos los productos
 export const getProductos = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM producto");
+    const result = await pool.query(
+      "SELECT * FROM producto WHERE ESTADO_PRODUCTO = 'A'"
+    );
     res.json(result.rows);
   } catch (error) {
     console.error(error);
@@ -11,18 +13,25 @@ export const getProductos = async (req, res) => {
   }
 };
 
-// Obtener un producto
+// Obtener un producto activo
 export const getProducto = async (req, res) => {
   const { productoId } = req.params;
-  const { rows } = await pool.query(
-    "SELECT * FROM producto WHERE id_producto = $1",
-    [productoId]
-  );
-  console.log(rows);
-  res.json(rows);
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM producto WHERE id_producto = $1 AND ESTADO_PRODUCTO = 'A'",
+      [productoId]
+    );
 
-  if (rows.length === 0) {
-    return res.status(404).json({ message: "Usuario no encontrado" });
+    if (rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Producto no encontrado o inactivo" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener el producto" });
   }
 };
 
@@ -39,10 +48,6 @@ export const getProductosDetalles = async (req, res) => {
         WHERE p.ESTADO_PRODUCTO = 'A' 
         AND (i.ESTADO_INVENTARIO IS NULL OR i.ESTADO_INVENTARIO = 'A');
     `);
-
-    if (!rows || !Array.isArray(rows)) {
-      return res.status(500).json({ error: "Error al obtener los productos" });
-    }
 
     res.json(rows);
   } catch (error) {
@@ -226,5 +231,29 @@ export const getProductoDetalle = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error al obtener los detalles del producto" });
+  }
+};
+
+// Eliminar un proveedor (cambio de estado a inactivo 'I')
+export const deleteProducto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("ID recibido para eliminar:", id); // <-- Depuración
+
+    const result = await pool.query(
+      "UPDATE PRODUCTO SET ESTADO_PRODUCTO = 'I' WHERE ID_PRODUCTO = $1 RETURNING *",
+      [id]
+    );
+
+    console.log("Resultado de la actualización:", result.rows); // <-- Depuración
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
+
+    res.json({ message: "Producto eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar producto:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };

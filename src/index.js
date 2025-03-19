@@ -7,6 +7,8 @@ import inventarioLocalRoutes from "./routes/inventariolocal.routes.js";
 import categoriasRoutes from "./routes/categoria.routes.js";
 import sedesRoutes from "./routes/sedes.routes.js";
 import movimientoRoutes from "./routes/movimiento.routes.js";
+import clientesRoutes from "./routes/clientes.routes.js";
+import proveedoresRoutes from "./routes/proveedores.routes.js";
 
 const app = express();
 
@@ -20,6 +22,8 @@ app.use("/api/inventariolocal", inventarioLocalRoutes);
 app.use("/api/categorias", categoriasRoutes);
 app.use("/api/sedes", sedesRoutes);
 app.use("/api/movimientos", movimientoRoutes);
+app.use("/api/clientes", clientesRoutes);
+app.use("/api/proveedores", proveedoresRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

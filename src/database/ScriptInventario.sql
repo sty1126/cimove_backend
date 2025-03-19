@@ -301,3 +301,11 @@ INSERT INTO TIPOMOV (ID_TIPOMOV, NOM_TIPOMOV) VALUES
 (7, 'Salida por Garantía'),
 (8, 'Ingreso por Reparación'),
 (9, 'Salida por Reparación');
+
+
+INSERT INTO TIPODOCUMENTO (ID_TIPODOCUMENTO, DESCRIPCION_TIPODOCUMENTO, ESTADO_TIPODOCUMENTO)
+VALUES 
+(1, 'Cédula de Ciudadanía', 'A'),
+(2, 'Tarjeta de Identidad', 'A'),
+(3, 'Cédula de Extranjería', 'A'),
+(4, 'Pasaporte', 'A');
