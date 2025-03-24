@@ -77,7 +77,11 @@ VALUES
 (2, 'María', 'Gómez', '1985-10-20', 'Femenino', 'A');
 
 
-INSERT INTO PROVEEDOR (ID_PROVEEDOR, NOMBRE_PROVEEDOR, ID_CIUDAD_PROVEEDOR, DIRECCION_PROVEEDOR, TELEFONO_PROVEEDOR, EMAIL_PROVEEDOR, ID_TIPOPROVEEDOR_PROVEEDOR, REPRESENTANTE_PROVEEDOR, FECHAREGISTRO_PROVEEDOR, SALDO_PROVEEDOR, ESTADO_PROVEEDOR)
-VALUES 
-(1, 'ElectroTech Ltda.', 1, 'Carrera 15 #23-45', '6012345678', 'contacto@electrotech.com', 1, 'Luis Fernández', '2024-01-10', 500000, 'A'),  -- Proveedor de productos
-(2, 'Servicio Técnico Global', 2, 'Calle 50 #12-34', '6056789123', 'servicios@tecnicoglobal.com', 2, 'Ana Martínez', '2024-02-05', 300000, 'A'); -- Proveedor de servicios técnicos
+INSERT INTO PROVEEDOR (ID_PROVEEDOR, NOMBRE_PROVEEDOR, ID_CIUDAD_PROVEEDOR, DIRECCION_PROVEEDOR, TELEFONO_PROVEEDOR, EMAIL_PROVEEDOR, ID_TIPOPROVEEDOR_PROVEEDOR, REPRESENTANTE_PROVEEDOR, 
+    FECHAREGISTRO_PROVEEDOR, SALDO_PROVEEDOR, DIGITOVERIFICACION_PROVEEDOR, ESTADO_PROVEEDOR)
+  VALUES
+('123456789-5', 'CellTech Repuestos', '11.001', 'Calle 10 #15-30; Bogotá', '3001234567', 'ventas@celltech.com', 1, 'Marino Pérez', '2024-03-10', 500000, '5', 'A'),
+('987654321-7', 'Accesorios Móvil Express', '25.214', 'Carrera 20 #45-10, Cota', '3012345678', 'contacto@movilexpress.com', 2, 'María Gómez', '2024-02-25', 750000, '7', 'A'),
+('456789123-3', 'Repuestos y Más', '11.001', 'Avenida Central #101, Bogotá', '3023456789', 'info@repuestosymas.com', 2, 'Carlos Ramírez', '2024-01-15', 300000, '3', 'A'),
+('789123456-9', 'Tecnocell Distribuciones', '11.001', 'Diagonal 50 #22-15, Bogotá', '3124567890', 'support@tecnocell.com', 1, 'Ana Torres', '2024-03-01', 600000, '9', 'A'),
+('321654987-4', 'Mundo Celular Parts', '11.001', 'Transversal 5 #8-50, Bogotá', '3205678901', 'ventas@mundocelular.com', 1, 'Luis Martínez', '2024-03-15', 900000, '4', 'A');
