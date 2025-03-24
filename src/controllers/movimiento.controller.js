@@ -35,6 +35,8 @@ export const createMovimiento = async (req, res) => {
       ID_PROVEEDOR_MOVIMIENTO = null,
       FECHA_MOVIMIENTO = new Date().toISOString().split("T")[0],
       ESTADO_MOVIMIENTO = "A",
+      STOCK_MINIMO = null, // 🔥 Se agregan estos dos valores para el stock
+      STOCK_MAXIMO = null,
     } = req.body;
 
     // 🔍 Validaciones previas
@@ -101,7 +103,7 @@ export const createMovimiento = async (req, res) => {
       [CANTIDAD_MOVIMIENTO, ID_PRODUCTO_MOVIMIENTO, ID_SEDE_MOVIMIENTO]
     );
 
-    // 🏬 Si hay sede destino, actualiza su inventario sin usar ON CONFLICT
+    // 🏬 Si hay sede destino, verifica su inventario
     if (ID_SEDEDESTINO_MOVIMIENTO) {
       const existeInventario = await pool.query(
         "SELECT 1 FROM INVENTARIOLOCAL WHERE ID_PRODUCTO_INVENTARIOLOCAL = $1 AND ID_SEDE_INVENTARIOLOCAL = $2",
@@ -119,18 +121,26 @@ export const createMovimiento = async (req, res) => {
           ]
         );
       } else {
-        // Si no existe, inserta un nuevo registro
+        // 🔥 Si no existe, verifica si STOCK_MINIMO y STOCK_MAXIMO fueron proporcionados
+        if (STOCK_MINIMO === null || STOCK_MAXIMO === null) {
+          return res.status(400).json({
+            error: "FALTA_STOCK",
+            message:
+              "Se requiere definir stock mínimo y máximo para la sede destino.",
+          });
+        }
+
+        // 🚀 Inserta el nuevo registro con los valores proporcionados
         await pool.query(
           `INSERT INTO INVENTARIOLOCAL (
-            ID_PRODUCTO_INVENTARIOLOCAL, ID_SEDE_INVENTARIOLOCAL, EXISTENCIA_INVENTARIOLOCAL, STOCKMAXIMO_INVENTARIOLOCAL
-          ) VALUES ($1, $2, $3, 
-            COALESCE((SELECT STOCKMAXIMO_INVENTARIOLOCAL FROM INVENTARIOLOCAL WHERE ID_PRODUCTO_INVENTARIOLOCAL = $1 LIMIT 1), 0))
-          ON CONFLICT (ID_PRODUCTO_INVENTARIOLOCAL, ID_SEDE_INVENTARIOLOCAL)
-          DO UPDATE SET EXISTENCIA_INVENTARIOLOCAL = INVENTARIOLOCAL.EXISTENCIA_INVENTARIOLOCAL + EXCLUDED.EXISTENCIA_INVENTARIOLOCAL;`,
+            ID_PRODUCTO_INVENTARIOLOCAL, ID_SEDE_INVENTARIOLOCAL, EXISTENCIA_INVENTARIOLOCAL, STOCKMINIMO_INVENTARIOLOCAL, STOCKMAXIMO_INVENTARIOLOCAL
+          ) VALUES ($1, $2, $3, $4, $5)`,
           [
             ID_PRODUCTO_MOVIMIENTO,
             ID_SEDEDESTINO_MOVIMIENTO,
             CANTIDAD_MOVIMIENTO,
+            STOCK_MINIMO,
+            STOCK_MAXIMO,
           ]
         );
       }

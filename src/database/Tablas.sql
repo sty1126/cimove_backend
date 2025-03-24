@@ -218,14 +218,11 @@ CREATE TABLE MOVPRODUCTO (
     FECHA_MOVIMIENTO DATE DEFAULT CURRENT_DATE,
     ESTADO_MOVIMIENTO VARCHAR(20),
 
-    -- Para cambios de sede
     ID_SEDE_MOVIMIENTO INT NOT NULL,
     ID_SEDEDESTINO_MOVIMIENTO INT,
 
-    -- Para clientes en ventas/créditos/garantías
     ID_CLIENTE_MOVIMIENTO INT,
 
-    -- Para reparaciones
     ID_PROVEEDOR_MOVIMIENTO INT,
 
     CONSTRAINT fk_tipomov_producto FOREIGN KEY (ID_TIPOMOV_MOVIMIENTO) REFERENCES TIPOMOV (ID_TIPOMOV),
@@ -236,91 +233,3 @@ CREATE TABLE MOVPRODUCTO (
     CONSTRAINT fk_proveedor_mov FOREIGN KEY (ID_PROVEEDOR_MOVIMIENTO) REFERENCES PROVEEDOR (ID_PROVEEDOR)
 );
 
-
-INSERT INTO PAIS (ID_PAIS, NOMBRE_PAIS, ESTADO_PAIS) VALUES ('COL', 'Colombia', 'A');
-
-
-INSERT INTO DEPARTAMENTO (ID_DPTO, NOMBRE_DPTO, ID_PAIS_DPTO) VALUES ('25', 'Cundinamarca', 'COL');
-
-INSERT INTO DEPARTAMENTO (ID_DPTO, NOMBRE_DPTO, ID_PAIS_DPTO) VALUES ('11', 'Bogotá D.C.', 'COL');
-
-
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('11.001', 'Bogotá', '11');
-
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.126', 'Cajicá', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.214', 'Cota', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.286', 'Funza', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.377', 'La Calera', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.43', 'Madrid', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.473', 'Mosquera', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.754', 'Soacha', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.785', 'Tabio', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.799', 'Tenjo', '25');
-INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.899', 'Zipaquirá', '25');
-
-
-CREATE OR REPLACE FUNCTION actualizar_precio_anterior()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Solo actualizar si el precio de venta actual cambia
-  IF OLD.precioventaact_producto <> NEW.precioventaact_producto THEN
-    NEW.precioventaant_producto = OLD.precioventaact_producto;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE TRIGGER trigger_actualizar_precio_anterior
-BEFORE UPDATE ON producto
-FOR EACH ROW
-EXECUTE FUNCTION actualizar_precio_anterior();
-
-
-CREATE OR REPLACE FUNCTION actualizar_margen_utilidad()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.margenutilidad_producto := NEW.precioventaact_producto - NEW.costoventa_producto;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE TRIGGER trg_actualizar_margen
-BEFORE INSERT OR UPDATE ON producto
-FOR EACH ROW
-EXECUTE FUNCTION actualizar_margen_utilidad();
-
-
-INSERT INTO TIPOMOV (ID_TIPOMOV, NOM_TIPOMOV) VALUES 
-(1, 'Entrada por Ajuste'),
-(2, 'Salida por Ajuste'),
-(3, 'Ventas Crédito'),
-(4, 'Ventas Contado'),
-(5, 'Cambio de sede'),
-(6, 'Ingreso por Garantía'),
-(7, 'Salida por Garantía'),
-(8, 'Ingreso por Reparación'),
-(9, 'Salida por Reparación');
-
-
-INSERT INTO TIPODOCUMENTO (ID_TIPODOCUMENTO, DESCRIPCION_TIPODOCUMENTO, ESTADO_TIPODOCUMENTO)
-VALUES 
-(1, 'Cédula de Ciudadanía', 'A'),
-(2, 'Tarjeta de Identidad', 'A'),
-(3, 'Cédula de Extranjería', 'A'),
-(4, 'Pasaporte', 'A');
-
-
-INSERT INTO TIPOCLIENTE (ID_TIPOCLIENTE, DESCRIPCION_TIPOCLIENTE, ESTADO_TIPOCLIENTE)
-VALUES 
-(1, 'Persona Natural', 'A'),
-(2, 'Persona Jurídica', 'A');
-
-
-INSERT INTO TIPOPROVEEDOR (ID_TIPOPROVEEDOR, NOMBRE_TIPOPROVEEDOR, ESTADO_TIPOPROVEEDOR)
-VALUES 
-(1, 'Proveedor de Mercancía', 'A'),
-(2, 'Proveedor de Servicios Técnicos', 'A');
-
-ALTER TABLE INVENTARIOLOCAL ADD CONSTRAINT inventariolocal_unique UNIQUE (ID_PRODUCTO_INVENTARIOLOCAL, ID_SEDE_INVENTARIOLOCAL);
