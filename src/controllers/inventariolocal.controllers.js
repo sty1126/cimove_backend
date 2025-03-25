@@ -43,24 +43,75 @@ export const createInventarioLocal = async (req, res) => {
     stockmaximo_inventariolocal,
     estado_inventariolocal,
   } = req.body;
+
+  // Validaciones básicas
+  if (
+    !id_producto_inventariolocal ||
+    !id_sede_inventariolocal ||
+    existencia_inventariolocal === undefined ||
+    stockmaximo_inventariolocal === undefined
+  ) {
+    return res.status(400).json({
+      message: "Todos los campos obligatorios deben estar presentes.",
+    });
+  }
+
+  if (
+    existencia_inventariolocal < 0 ||
+    stockminimo_inventariolocal < 0 ||
+    stockmaximo_inventariolocal < 1
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Los valores de stock deben ser positivos." });
+  }
+
   try {
+    // Verificar si el producto ya está registrado en esa sede
+    const existing = await pool.query(
+      "SELECT * FROM inventariolocal WHERE id_producto_inventariolocal = $1 AND id_sede_inventariolocal = $2",
+      [id_producto_inventariolocal, id_sede_inventariolocal]
+    );
+
+    if (existing.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ message: "El producto ya está registrado en esta sede." });
+    }
+
+    // Insertar en la base de datos
     const result = await pool.query(
       `INSERT INTO inventariolocal (id_producto_inventariolocal, id_sede_inventariolocal, existencia_inventariolocal, 
-      stockminimo_inventariolocal, stockmaximo_inventariolocal, estado_inventariolocal)
+        stockminimo_inventariolocal, stockmaximo_inventariolocal, estado_inventariolocal)
       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [
         id_producto_inventariolocal,
         id_sede_inventariolocal,
         existencia_inventariolocal,
-        stockminimo_inventariolocal,
+        stockminimo_inventariolocal || null, // Si no se envía, será NULL en la BD
         stockmaximo_inventariolocal,
         estado_inventariolocal || "A",
       ]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error al registrar el inventario local" });
+
+    // Manejo de errores específicos
+    if (error.code === "23503") {
+      return res
+        .status(400)
+        .json({ message: "El producto o la sede no existen." });
+    }
+
+    if (error.code === "22P02") {
+      return res.status(400).json({ message: "Formato de datos inválido." });
+    }
+
+    res
+      .status(500)
+      .json({ message: "Error al registrar el inventario local." });
   }
 };
 
@@ -123,9 +174,10 @@ export const updateInventarioLocal = async (req, res) => {
   }
 };
 
-// Añadir stock a una sede y actualizar el inventario general
 export const addStockToSede = async (req, res) => {
-  const { idProducto, idSede, cantidad } = req.body;
+  const { idProducto, idSede } = req.params;
+  const { cantidad } = req.body; // La cantidad sigue viniendo en el body
+
   try {
     await pool.query("BEGIN");
 
@@ -146,5 +198,28 @@ export const addStockToSede = async (req, res) => {
   } catch (err) {
     await pool.query("ROLLBACK");
     res.status(500).json({ error: "Error al actualizar stock" });
+  }
+};
+
+export const existeEnInventarioLocal = async (req, res) => {
+  const { idProducto, idSede } = req.params;
+
+  try {
+    const result = await pool.query(
+      "SELECT ID_INVENTARIOLOCAL FROM INVENTARIOLOCAL WHERE ID_PRODUCTO_INVENTARIOLOCAL = $1 AND ID_SEDE_INVENTARIOLOCAL = $2",
+      [idProducto, idSede]
+    );
+
+    if (result.rows.length > 0) {
+      res.json({
+        existe: true,
+        inventarioLocalId: result.rows[0].id_inventariolocal,
+      });
+    } else {
+      res.json({ existe: false });
+    }
+  } catch (error) {
+    console.error("Error en existeEnInventarioLocal:", error);
+    res.status(500).json({ error: "Error de servidor" }); // Asegurar JSON
   }
 };
