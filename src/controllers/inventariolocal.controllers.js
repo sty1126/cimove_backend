@@ -115,41 +115,45 @@ export const createInventarioLocal = async (req, res) => {
   }
 };
 
-// Actualizar un registro de inventario local
 export const updateInventarioLocal = async (req, res) => {
   const { inventarioLocalId } = req.params;
   const nuevosDatos = req.body;
+
   try {
     const { rows } = await pool.query(
       "SELECT * FROM inventariolocal WHERE id_inventariolocal = $1",
       [inventarioLocalId]
     );
+
     if (rows.length === 0) {
       return res
         .status(404)
         .json({ message: "Inventario local no encontrado" });
     }
+
     const inventarioLocalActual = rows[0];
+
     const datosActualizados = {
       id_producto_inventariolocal:
-        nuevosDatos.id_producto_inventariolocal ||
+        nuevosDatos.id_producto_inventariolocal ??
         inventarioLocalActual.id_producto_inventariolocal,
       id_sede_inventariolocal:
-        nuevosDatos.id_sede_inventariolocal ||
+        nuevosDatos.id_sede_inventariolocal ??
         inventarioLocalActual.id_sede_inventariolocal,
       existencia_inventariolocal:
-        nuevosDatos.existencia_inventariolocal ||
+        nuevosDatos.existencia_inventariolocal ??
         inventarioLocalActual.existencia_inventariolocal,
       stockminimo_inventariolocal:
-        nuevosDatos.stockminimo_inventariolocal ||
+        nuevosDatos.stockminimo_inventariolocal ??
         inventarioLocalActual.stockminimo_inventariolocal,
       stockmaximo_inventariolocal:
-        nuevosDatos.stockmaximo_inventariolocal ||
+        nuevosDatos.stockmaximo_inventariolocal ??
         inventarioLocalActual.stockmaximo_inventariolocal,
       estado_inventariolocal:
-        nuevosDatos.estado_inventariolocal ||
+        nuevosDatos.estado_inventariolocal ??
         inventarioLocalActual.estado_inventariolocal,
     };
+
     const result = await pool.query(
       `UPDATE inventariolocal 
       SET id_producto_inventariolocal = $1, id_sede_inventariolocal = $2, existencia_inventariolocal = $3, 
@@ -165,6 +169,7 @@ export const updateInventarioLocal = async (req, res) => {
         inventarioLocalId,
       ]
     );
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error(error);
@@ -176,20 +181,37 @@ export const updateInventarioLocal = async (req, res) => {
 
 export const addStockToSede = async (req, res) => {
   const { idProducto, idSede } = req.params;
-  const { cantidad } = req.body; // La cantidad sigue viniendo en el body
+  const { cantidad } = req.body;
+
+  if (!cantidad || cantidad <= 0) {
+    return res.status(400).json({ message: "La cantidad debe ser mayor a 0" });
+  }
 
   try {
     await pool.query("BEGIN");
 
+    // Verificar si el producto existe en la sede
+    const { rows } = await pool.query(
+      "SELECT existencia_inventariolocal FROM INVENTARIOLOCAL WHERE id_producto_inventariolocal = $1 AND id_sede_inventariolocal = $2",
+      [idProducto, idSede]
+    );
+
+    if (rows.length === 0) {
+      await pool.query("ROLLBACK");
+      return res
+        .status(404)
+        .json({ message: "El producto no está en esta sede" });
+    }
+
     // Actualizar inventario local
     await pool.query(
-      "UPDATE INVENTARIOLOCAL SET EXISTENCIA_INVENTARIOLOCAL = EXISTENCIA_INVENTARIOLOCAL + $1 WHERE ID_PRODUCTO_INVENTARIOLOCAL = $2 AND ID_SEDE_INVENTARIOLOCAL = $3",
+      "UPDATE INVENTARIOLOCAL SET existencia_inventariolocal = existencia_inventariolocal + $1 WHERE id_producto_inventariolocal = $2 AND id_sede_inventariolocal = $3",
       [cantidad, idProducto, idSede]
     );
 
     // Actualizar inventario general
     await pool.query(
-      "UPDATE INVENTARIO SET EXISTENCIA_INVENTARIO = EXISTENCIA_INVENTARIO + $1 WHERE ID_PRODUCTO_INVENTARIO = $2",
+      "UPDATE INVENTARIO SET existencia_inventario = existencia_inventario + $1 WHERE id_producto_inventario = $2",
       [cantidad, idProducto]
     );
 
@@ -197,6 +219,7 @@ export const addStockToSede = async (req, res) => {
     res.json({ message: "Stock añadido exitosamente" });
   } catch (err) {
     await pool.query("ROLLBACK");
+    console.error(err);
     res.status(500).json({ error: "Error al actualizar stock" });
   }
 };
