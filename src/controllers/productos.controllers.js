@@ -257,3 +257,28 @@ export const deleteProducto = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+
+export const getProveedoresPorProducto = async (req, res) => {
+  const { productoId } = req.params;
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT 
+          p.ID_PROVEEDOR,
+          p.NOMBRE_PROVEEDOR,
+          p.TELEFONO_PROVEEDOR,
+          p.EMAIL_PROVEEDOR,
+          pp.ESTADO_PROVEEDORPRODUCTO
+      FROM PROVEEDORPRODUCTO pp
+      JOIN PROVEEDOR p ON pp.ID_PROVEEDOR_PROVEEDORPRODUCTO = p.ID_PROVEEDOR
+      WHERE pp.ID_PRODUCTO_PROVEEDORPRODUCTO = $1
+      AND pp.ESTADO_PROVEEDORPRODUCTO = 'A';`,
+      [productoId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Error al obtener proveedores del producto:", error);
+    res.status(500).json({ message: "Error al obtener proveedores" });
+  }
+};

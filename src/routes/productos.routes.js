@@ -8,6 +8,7 @@ import {
   getProductosDetalles,
   putProducto,
   deleteProducto,
+  getProveedoresPorProducto,
 } from "../controllers/productos.controllers.js";
 
 const router = Router();
@@ -19,5 +20,6 @@ router.get("/:productoId", getProducto); // Obtener un producto por ID
 router.post("/", createProducto); // Crear un producto
 router.put("/:productoId", putProducto); // Actualizar un producto
 router.put("/eliminar/:id", deleteProducto); // Eliminar un proveedor
+router.get("/:productoId/proveedores", getProveedoresPorProducto);
 
 export default router;
