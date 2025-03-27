@@ -35,7 +35,7 @@ export const createMovimiento = async (req, res) => {
       ID_PROVEEDOR_MOVIMIENTO = null,
       FECHA_MOVIMIENTO = new Date().toISOString().split("T")[0],
       ESTADO_MOVIMIENTO = "A",
-      STOCK_MINIMO = null, // 🔥 Se agregan estos dos valores para el stock
+      STOCK_MINIMO = null, 
       STOCK_MAXIMO = null,
     } = req.body;
 
