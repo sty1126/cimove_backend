@@ -5,6 +5,7 @@ import {
   getProducto,
   getProductos,
   getProductoDetalle,
+  getProductosDetalles,
   putProducto,
   deleteProducto,
 } from "../controllers/productos.controllers.js";
@@ -13,6 +14,7 @@ const router = Router();
 
 router.get("/", getProductos); // Obtener todos los productos
 router.get("/detalle/:productoId", getProductoDetalle);
+router.get("/detalles", getProductosDetalles);
 router.get("/:productoId", getProducto); // Obtener un producto por ID
 router.post("/", createProducto); // Crear un producto
 router.put("/:productoId", putProducto); // Actualizar un producto
