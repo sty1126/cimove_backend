@@ -4,7 +4,6 @@ import {
   createProducto,
   getProducto,
   getProductos,
-  getProductosDetalles,
   getProductoDetalle,
   putProducto,
   deleteProducto,
@@ -13,7 +12,6 @@ import {
 const router = Router();
 
 router.get("/", getProductos); // Obtener todos los productos
-router.get("/detalles", getProductosDetalles); // Obtener detalles completos de productos
 router.get("/detalle/:productoId", getProductoDetalle);
 router.get("/:productoId", getProducto); // Obtener un producto por ID
 router.post("/", createProducto); // Crear un producto
