@@ -9,7 +9,8 @@ export const getFacturasProveedor = async (req, res) => {
           f.monto_facturaproveedor,
           COALESCE(SUM(a.monto_abonofactura), 0) AS total_abonado,
           f.monto_facturaproveedor - COALESCE(SUM(a.monto_abonofactura), 0) AS saldo_pendiente,
-          p.nombre_proveedor
+          p.nombre_proveedor,
+          f.estado_facturaproveedor
         FROM facturaproveedor f
         JOIN ordencompra oc ON f.id_ordencompra_facturaproveedor = oc.id_ordencompra
         JOIN proveedor p ON oc.id_proveedor_ordencompra = p.id_proveedor
