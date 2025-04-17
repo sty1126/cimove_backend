@@ -72,3 +72,43 @@ export const desasociarProveedorDeProducto = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+export const getProveedoresByMultipleProductos = async (req, res) => {
+  try {
+    console.log("💡 Entró a getProveedoresByMultipleProductos");
+
+    const { ids } = req.query;
+    if (!ids) {
+      return res.status(400).json({ error: "Faltan los IDs de producto" });
+    }
+
+    // Parsear y filtrar IDs válidos
+    const idList = ids
+      .split(",")
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
+
+    if (idList.length === 0) {
+      return res.status(400).json({ error: "IDs de producto inválidos" });
+    }
+
+    console.log("🧾 ID de productos:", idList);
+
+    const result = await pool.query(
+      `SELECT 
+        pp.id_producto_proveedorproducto AS id_producto,
+        p.id_proveedor,
+        p.nombre_proveedor
+       FROM proveedorproducto pp
+       JOIN proveedor p ON p.id_proveedor = pp.id_proveedor_proveedorproducto
+       WHERE pp.estado_proveedorproducto = 'A'
+         AND pp.id_producto_proveedorproducto = ANY($1)`,
+      [idList]
+    );
+
+    console.log("✅ Resultados de consulta:", result.rows);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("❌ Error al obtener proveedores múltiples:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
