@@ -3,7 +3,7 @@ import { getTiposProveedor, createTipoProveedor } from "../controllers/tipoprove
 
 const router = Router();
 
-router.get("/tipoproveedores", getTiposProveedor);
-router.post("/tipoproveedores", createTipoProveedor);
+router.get("/", getTiposProveedor);
+router.post("/", createTipoProveedor);
 
 export default router;

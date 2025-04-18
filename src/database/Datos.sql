@@ -20,33 +20,38 @@ INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.799', 
 INSERT INTO CIUDAD (ID_CIUDAD, NOMBRE_CIUDAD, ID_DPTO_CIUDAD) VALUES ('25.899', 'Zipaquirá', '25');
 
 
-INSERT INTO TIPOMOV (ID_TIPOMOV, NOM_TIPOMOV) VALUES 
-(1, 'Entrada por Ajuste'),
-(2, 'Salida por Ajuste'),
-(3, 'Ventas Crédito'),
-(4, 'Ventas Contado'),
-(5, 'Cambio de sede'),
-(6, 'Ingreso por Garantía'),
-(7, 'Salida por Garantía'),
-(8, 'Ingreso por Reparación'),
-(9, 'Salida por Reparación');
+INSERT INTO TIPOMOV (NOM_TIPOMOV) VALUES 
+('Entrada por Ajuste'),
+('Salida por Ajuste'),
+('Ventas Crédito'),
+('Ventas Contado'),
+('Cambio de sede'),
+('Ingreso por Garantía'),
+('Salida por Garantía'),
+('Ingreso por Reparación'),
+('Salida por Reparación');
 
 
-INSERT INTO TIPODOCUMENTO (ID_TIPODOCUMENTO, DESCRIPCION_TIPODOCUMENTO, ESTADO_TIPODOCUMENTO)
+INSERT INTO TIPODOCUMENTO (DESCRIPCION_TIPODOCUMENTO, ESTADO_TIPODOCUMENTO)
 VALUES 
-(1, 'Cédula de Ciudadanía', 'A'),
-(2, 'Tarjeta de Identidad', 'A'),
-(3, 'Cédula de Extranjería', 'A'),
-(4, 'Pasaporte', 'A');
+('Cédula de Ciudadanía', 'A'),
+('Tarjeta de Identidad', 'A'),
+('Cédula de Extranjería', 'A'),
+('Pasaporte', 'A');
 
 
-INSERT INTO TIPOCLIENTE (ID_TIPOCLIENTE, DESCRIPCION_TIPOCLIENTE, ESTADO_TIPOCLIENTE)
+INSERT INTO TIPOCLIENTE (DESCRIPCION_TIPOCLIENTE, ESTADO_TIPOCLIENTE)
 VALUES 
-(1, 'Persona Natural', 'A'),
-(2, 'Persona Jurídica', 'A');
+('Persona Natural', 'A'),
+('Persona Jurídica', 'A');
 
 
-INSERT INTO TIPOPROVEEDOR (ID_TIPOPROVEEDOR, NOMBRE_TIPOPROVEEDOR, ESTADO_TIPOPROVEEDOR)
+INSERT INTO TIPOPROVEEDOR (NOMBRE_TIPOPROVEEDOR, ESTADO_TIPOPROVEEDOR)
 VALUES 
-(1, 'Proveedor de Mercancía', 'A'),
-(2, 'Proveedor de Servicios Técnicos', 'A');
+('Proveedor de Mercancía', 'A'),
+('Proveedor de Servicios Técnicos', 'A');
+
+INSERT INTO tipousuario (descripcion_tipousuario, estado_tipousuario)
+VALUES 
+  ('Administrador', 'A'),
+  ('Vendedor', 'A');

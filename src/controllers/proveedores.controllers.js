@@ -59,12 +59,16 @@ export const createTipoProveedor = async (req, res) => {
       return res.status(400).json({ error: "El nombre del tipo es requerido" });
     }
 
-    const [result] = await pool.query(
-      "INSERT INTO TIPOPROVEEDOR (ID_TIPOPROVEEDOR, NOMBRE_TIPOPROVEEDOR, ESTADO_TIPOPROVEEDOR) VALUES (UUID(), ?, 'A')",
+    const result = await pool.query(
+      "INSERT INTO TIPOPROVEEDOR (NOMBRE_TIPOPROVEEDOR, ESTADO_TIPOPROVEEDOR) VALUES ($1, 'A') RETURNING *",
       [nombre_tipoproveedor]
     );
 
-    res.status(201).json({ id: result.insertId, nombre_tipoproveedor });
+    if (result.rows.length === 0) {
+      return res.status(500).json({ error: "No se pudo crear el tipo de proveedor" });
+    }
+
+    res.status(201).json(result.rows[0]); // Devuelve el objeto completo con los nombres reales de las columnas
   } catch (error) {
     console.error("Error al crear tipo de proveedor:", error);
     res.status(500).json({ error: "Error interno del servidor" });

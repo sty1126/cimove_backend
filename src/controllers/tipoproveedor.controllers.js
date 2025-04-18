@@ -4,7 +4,7 @@ import { pool } from "../db.js";
 export const getTiposProveedor = async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id_tipoproveedor, descripcion_tipoproveedor FROM TIPOPROVEEDOR WHERE estado_tipoproveedor = 'A'"
+      "SELECT id_tipoproveedor, nombre_tipoproveedor FROM TIPOPROVEEDOR WHERE estado_tipoproveedor = 'A'"
     );
     res.json(result.rows);
   } catch (error) {
@@ -16,17 +16,17 @@ export const getTiposProveedor = async (req, res) => {
 // Agregar un nuevo tipo de proveedor
 export const createTipoProveedor = async (req, res) => {
   try {
-    const { descripcion_tipoproveedor } = req.body;
+    const { nombre_tipoproveedor } = req.body;
 
-    if (!descripcion_tipoproveedor) {
+    if (!nombre_tipoproveedor) {
       return res
         .status(400)
-        .json({ error: "La descripción del tipo de proveedor es obligatoria" });
+        .json({ error: "El nombre del tipo de proveedor es obligatorio" });
     }
 
     const result = await pool.query(
-      "INSERT INTO TIPOPROVEEDOR (descripcion_tipoproveedor, estado_tipoproveedor) VALUES ($1, 'A') RETURNING *",
-      [descripcion_tipoproveedor]
+      "INSERT INTO TIPOPROVEEDOR (nombre_tipoproveedor, estado_tipoproveedor) VALUES ($1, 'A') RETURNING *",
+      [nombre_tipoproveedor]
     );
 
     res.status(201).json(result.rows[0]);

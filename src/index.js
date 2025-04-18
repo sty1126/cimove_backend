@@ -12,9 +12,9 @@ import proveedorProductoRoutes from "./routes/proveedorProducto.routes.js";
 import proveedoresRoutes from "./routes/proveedores.routes.js";
 import tiposProveedorRoutes from "./routes/tipoproveedor.routes.js";
 import ciudadesRoutes from "./routes/ciudades.routes.js";
-import comprasRoutes from "./routes/ordenesCompra.routes.js";
 import abonosRoutes from "./routes/abonos.routes.js";
 import facturasProveedorRoutes from "./routes/facturasProveedores.routes.js";
+import ordenesCompra from "./routes/ordenesCompra.routes.js";
 
 const app = express();
 
@@ -33,9 +33,9 @@ app.use("/api/proveedores", proveedoresRoutes);
 app.use("/api/proveedor-producto", proveedorProductoRoutes);
 app.use("/api/tipoproveedores", tiposProveedorRoutes);
 app.use("/api/ciudades", ciudadesRoutes);
-app.use("/api/compras", comprasRoutes);
 app.use("/api/abonos", abonosRoutes);
 app.use("/api/facturas-proveedor", facturasProveedorRoutes);
+app.use("/api/ordenes", ordenesCompra);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

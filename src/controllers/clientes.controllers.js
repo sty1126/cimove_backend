@@ -171,3 +171,103 @@ export const getClientesFormateados = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+
+export const updateCliente = async (req, res) => {
+  const { id } = req.params;
+  const {
+    id_tipodocumento_cliente,
+    id_tipocliente_cliente,
+    telefono_cliente,
+    id_sede_cliente,
+    email_cliente,
+    direccion_cliente,
+    barrio_cliente,
+    codigopostal_cliente,
+    nombre_cliente,
+    apellido_cliente,
+    fechanacimiento_cliente,
+    genero_cliente,
+    razonsocial_cliente,
+    nombrecomercial_cliente,
+    representante_cliente,
+    digitoverificacion_cliente,
+  } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `
+      UPDATE CLIENTE SET
+        ID_TIPODOCUMENTO_CLIENTE = $1,
+        ID_TIPOCLIENTE_CLIENTE = $2,
+        TELEFONO_CLIENTE = $3,
+        ID_SEDE_CLIENTE = $4,
+        EMAIL_CLIENTE = $5,
+        DIRECCION_CLIENTE = $6,
+        BARRIO_CLIENTE = $7,
+        CODIGOPOSTAL_CLIENTE = $8
+      WHERE ID_CLIENTE = $9
+      `,
+      [
+        id_tipodocumento_cliente,
+        id_tipocliente_cliente,
+        telefono_cliente,
+        id_sede_cliente,
+        email_cliente,
+        direccion_cliente,
+        barrio_cliente,
+        codigopostal_cliente,
+        id,
+      ]
+    );
+
+    if (id_tipocliente_cliente === 1) {
+      await client.query(
+        `
+        UPDATE CLIENTENATURAL SET
+          NOMBRE_CLIENTE = $1,
+          APELLIDO_CLIENTE = $2,
+          FECHANACIMIENTO_CLIENTE = $3,
+          GENERO_CLIENTE = $4
+        WHERE ID_CLIENTE = $5
+        `,
+        [
+          nombre_cliente,
+          apellido_cliente,
+          fechanacimiento_cliente,
+          genero_cliente,
+          id,
+        ]
+      );
+    } else if (id_tipocliente_cliente === 2) {
+      await client.query(
+        `
+        UPDATE CLIENTEJURIDICO SET
+          RAZONSOCIAL_CLIENTE = $1,
+          NOMBRECOMERCIAL_CLIENTE = $2,
+          REPRESENTANTE_CLIENTE = $3,
+          DIGITOVERIFICACION_CLIENTE = $4
+        WHERE ID_CLIENTE = $5
+        `,
+        [
+          razonsocial_cliente,
+          nombrecomercial_cliente,
+          representante_cliente,
+          digitoverificacion_cliente,
+          id,
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.status(200).json({ message: "Cliente actualizado correctamente" });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error al actualizar cliente:", error);
+    res.status(500).json({ message: "Error al actualizar cliente" });
+  } finally {
+    client.release();
+  }
+};
