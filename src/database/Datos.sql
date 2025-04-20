@@ -37,7 +37,8 @@ VALUES
 ('Cédula de Ciudadanía', 'A'),
 ('Tarjeta de Identidad', 'A'),
 ('Cédula de Extranjería', 'A'),
-('Pasaporte', 'A');
+('Pasaporte', 'A'),
+('NIT', 'A');
 
 
 INSERT INTO TIPOCLIENTE (DESCRIPCION_TIPOCLIENTE, ESTADO_TIPOCLIENTE)
@@ -55,3 +56,12 @@ INSERT INTO tipousuario (descripcion_tipousuario, estado_tipousuario)
 VALUES 
   ('Administrador', 'A'),
   ('Vendedor', 'A');
+
+INSERT INTO TIPOMETODOPAGO (NOMBRE_TIPOMETODOPAGO, COMISION_TIPOMETODOPAGO, RECEPCION_TIPOMETODOPAGO)
+VALUES 
+  ('Efectivo', 0, 'Inmediata'),
+  ('Sistecrédito', 5, 'A 15 días'),
+  ('Tarjeta Débito', 2.5, 'A 1-2 días hábiles'),
+  ('Crédito', 3, 'A 15 días'),
+  ('Nequi', 1.5, 'Inmediata'),
+  ('Daviplata', 1.5, 'Inmediata');

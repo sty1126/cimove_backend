@@ -5,9 +5,10 @@ import {
   getClientesNaturales,
   getClientesJuridicos,
   getTiposCliente,
-  createCliente,
+  crearCliente,
   getClientesFormateados,
   updateCliente,
+  eliminarCliente,
 } from "../controllers/clientes.controllers.js";
 
 const router = Router();
@@ -19,6 +20,7 @@ router.get("/naturales", getClientesNaturales);
 router.get("/juridicos", getClientesJuridicos);
 router.get("/tipos-cliente", getTiposCliente);
 router.put("/:id", updateCliente);
-router.post("/", createCliente);
+router.post("/", crearCliente);
+router.put("/eliminar/:id", eliminarCliente);
 
 export default router;
