@@ -92,44 +92,115 @@ export const getTiposCliente = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
-
-// Crear un nuevo cliente
-export const createCliente = async (req, res) => {
+export const crearCliente = async (req, res) => {
+  const client = await pool.connect();
   try {
-    const { id_tipo_cliente, datos } = req.body;
-    const result = await pool.query(
-      "INSERT INTO CLIENTE (ID_TIPOCLIENTE_CLIENTE) VALUES ($1) RETURNING ID_CLIENTE",
-      [id_tipo_cliente]
-    );
-    const id_cliente = result.rows[0].id_cliente;
+    const {
+      id_cliente, // Cédula o NIT
+      id_tipodocumento_cliente,
+      id_tipocliente_cliente,
+      telefono_cliente,
+      id_sede_cliente,
+      email_cliente,
+      direccion_cliente,
+      barrio_cliente,
+      codigopostal_cliente,
+      nombre_cliente,
+      apellido_cliente,
+      fechanacimiento_cliente,
+      genero_cliente,
+      razonsocial_cliente,
+      nombrecomercial_cliente,
+      representante_cliente,
+      digitoverificacion_cliente,
+    } = req.body;
 
-    if (id_tipo_cliente === 1) {
-      await pool.query(
-        "INSERT INTO CLIENTENATURAL (ID_CLIENTE, NOMBRE_CLIENTE, APELLIDO_CLIENTE, FECHANACIMIENTO_CLIENTE, GENERO_CLIENTE) VALUES ($1, $2, $3, $4, $5)",
+    await client.query("BEGIN");
+
+    // Verificar si ya existe un cliente con ese ID
+    const existe = await client.query(
+      "SELECT 1 FROM CLIENTE WHERE ID_CLIENTE = $1",
+      [id_cliente]
+    );
+
+    if (existe.rows.length > 0) {
+      throw new Error("Ya existe un cliente con ese documento o NIT.");
+    }
+
+    // Insertar en CLIENTE (tabla general)
+    await client.query(
+      `INSERT INTO CLIENTE (
+        ID_CLIENTE,
+        ID_TIPODOCUMENTO_CLIENTE,
+        ID_TIPOCLIENTE_CLIENTE,
+        TELEFONO_CLIENTE,
+        ID_SEDE_CLIENTE,
+        EMAIL_CLIENTE,
+        DIRECCION_CLIENTE,
+        BARRIO_CLIENTE,
+        CODIGOPOSTAL_CLIENTE
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        id_cliente,
+        id_tipodocumento_cliente,
+        id_tipocliente_cliente,
+        telefono_cliente,
+        id_sede_cliente,
+        email_cliente,
+        direccion_cliente,
+        barrio_cliente,
+        codigopostal_cliente,
+      ]
+    );
+
+    // Cliente natural
+    if (String(id_tipocliente_cliente) === "1") {
+      await client.query(
+        `INSERT INTO CLIENTENATURAL (
+          ID_CLIENTE,
+          NOMBRE_CLIENTE,
+          APELLIDO_CLIENTE,
+          FECHANACIMIENTO_CLIENTE,
+          GENERO_CLIENTE
+        ) VALUES ($1, $2, $3, $4, $5)`,
         [
           id_cliente,
-          datos.nombre,
-          datos.apellido,
-          datos.fecha_nacimiento,
-          datos.genero,
-        ]
-      );
-    } else if (id_tipo_cliente === 2) {
-      await pool.query(
-        "INSERT INTO CLIENTEJURIDICO (ID_CLIENTE, RAZONSOCIAL_CLIENTE, NOMBRECOMERCIAL_CLIENTE, REPRESENTANTE_CLIENTE, DIGITOVERIFICACION_CLIENTE) VALUES ($1, $2, $3, $4, $5)",
-        [
-          id_cliente,
-          datos.razon_social,
-          datos.nombre_comercial,
-          datos.representante,
-          datos.digito_verificacion,
+          nombre_cliente,
+          apellido_cliente,
+          fechanacimiento_cliente,
+          genero_cliente,
         ]
       );
     }
-    res.json({ message: "Cliente creado exitosamente", id_cliente });
+
+    // Cliente jurídico
+    if (String(id_tipocliente_cliente) === "2") {
+      await client.query(
+        `INSERT INTO CLIENTEJURIDICO (
+          ID_CLIENTE,
+          RAZONSOCIAL_CLIENTE,
+          NOMBRECOMERCIAL_CLIENTE,
+          REPRESENTANTE_CLIENTE,
+          DIGITOVERIFICACION_CLIENTE
+        ) VALUES ($1, $2, $3, $4, $5)`,
+        [
+          id_cliente,
+          razonsocial_cliente,
+          nombrecomercial_cliente,
+          representante_cliente,
+          digitoverificacion_cliente,
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.status(201).json({ message: "Cliente creado exitosamente" });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Error al crear cliente:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: error.message || "Error al crear cliente" });
+  } finally {
+    client.release();
   }
 };
 
@@ -175,8 +246,6 @@ export const getClientesFormateados = async (req, res) => {
 export const updateCliente = async (req, res) => {
   const { id } = req.params;
   const {
-    id_tipodocumento_cliente,
-    id_tipocliente_cliente,
     telefono_cliente,
     id_sede_cliente,
     email_cliente,
@@ -191,6 +260,7 @@ export const updateCliente = async (req, res) => {
     nombrecomercial_cliente,
     representante_cliente,
     digitoverificacion_cliente,
+    id_tipocliente_cliente, // Este sí lo necesitas para decidir cuál subtabla actualizar
   } = req.body;
 
   const client = await pool.connect();
@@ -200,19 +270,15 @@ export const updateCliente = async (req, res) => {
     await client.query(
       `
       UPDATE CLIENTE SET
-        ID_TIPODOCUMENTO_CLIENTE = $1,
-        ID_TIPOCLIENTE_CLIENTE = $2,
-        TELEFONO_CLIENTE = $3,
-        ID_SEDE_CLIENTE = $4,
-        EMAIL_CLIENTE = $5,
-        DIRECCION_CLIENTE = $6,
-        BARRIO_CLIENTE = $7,
-        CODIGOPOSTAL_CLIENTE = $8
-      WHERE ID_CLIENTE = $9
+        TELEFONO_CLIENTE = $1,
+        ID_SEDE_CLIENTE = $2,
+        EMAIL_CLIENTE = $3,
+        DIRECCION_CLIENTE = $4,
+        BARRIO_CLIENTE = $5,
+        CODIGOPOSTAL_CLIENTE = $6
+      WHERE ID_CLIENTE = $7
       `,
       [
-        id_tipodocumento_cliente,
-        id_tipocliente_cliente,
         telefono_cliente,
         id_sede_cliente,
         email_cliente,
@@ -269,5 +335,34 @@ export const updateCliente = async (req, res) => {
     res.status(500).json({ message: "Error al actualizar cliente" });
   } finally {
     client.release();
+  }
+};
+
+export const eliminarCliente = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Cambiar estado en CLIENTE
+    await pool.query(
+      `UPDATE CLIENTE SET ESTADO_CLIENTE = 'I' WHERE ID_CLIENTE = $1`,
+      [id]
+    );
+
+    // También puedes opcionalmente desactivar en CLIENTENATURAL o CLIENTEJURIDICO
+    await pool.query(
+      `UPDATE CLIENTENATURAL SET ESTADO_CLIENTE = 'I' WHERE ID_CLIENTE = $1`,
+      [id]
+    );
+    await pool.query(
+      `UPDATE CLIENTEJURIDICO SET ESTADO_CLIENTE = 'I' WHERE ID_CLIENTE = $1`,
+      [id]
+    );
+
+    res
+      .status(200)
+      .json({ message: "Cliente eliminado correctamente (estado lógico)." });
+  } catch (error) {
+    console.error("Error al eliminar cliente:", error);
+    res.status(500).json({ message: "Error al eliminar cliente." });
   }
 };

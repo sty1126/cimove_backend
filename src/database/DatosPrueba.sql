@@ -146,7 +146,7 @@ WHERE id_producto % 2 = 0;
 
 INSERT INTO empleado (
   id_empleado, id_sede_empleado, id_tipodocumento_empleado,
-  nombre_empleado, telefono_usuario, cargo_empleado,
+  nombre_empleado, telefono_empleado, cargo_empleado,
   email_empleado, estado_empleado
 )
 VALUES 
@@ -167,3 +167,22 @@ VALUES
   (2, 'ventas123', 'carlos.garcia@kpershop.com', '3100000002', 2, 'A'), -- Carlos, Vendedor
   (3, 'asist123', 'lucia.moreno@kpershop.com', '3100000003', 2, 'A'); -- Lucía, Vendedora
 
+INSERT INTO SALARIO (
+  ID_EMPLEADO_SALARIO,
+  MONTO_SALARIO,
+  TIPOPAGO_SALARIO,
+  ESTADO_SALARIO
+)
+VALUES
+  (1, 3500000, 'Mensual', 'A'),  -- María Pérez, Admin
+  (2, 2500000, 'Quincenal', 'A'), -- Carlos García, Vendedor
+  (3, 2400000, 'Mensual', 'A');   -- Lucía Moreno, Vendedora
+
+INSERT INTO TIPOMETODOPAGO (NOMBRE_TIPOMETODOPAGO, COMISION_TIPOMETODOPAGO, RECEPCION_TIPOMETODOPAGO)
+VALUES 
+  ('Efectivo', 0, 'Inmediata'),
+  ('Sistecrédito', 5, 'A 15 días'),
+  ('Tarjeta Débito', 2.5, 'A 1-2 días hábiles'),
+  ('Crédito', 3, 'A 15 días'),
+  ('Nequi', 1.5, 'Inmediata'),
+  ('Daviplata', 1.5, 'Inmediata');
