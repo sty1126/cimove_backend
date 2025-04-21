@@ -1,5 +1,4 @@
-// 👇 IMPORTA Y MOCKEA EL pool ANTES DEL CONTROLADOR
-import { pool } from "../../db.js"; // Ajusta según tu estructura
+import { pool } from "../../db.js"; 
 
 // Mocks para pruebas
 const proveedoresMock = {
@@ -15,7 +14,7 @@ const tipoProveedorMock = {
   ]
 };
 
-// Utilidad para simular respuesta
+// Mock para simular la respuesta
 function mockResponse() {
   const res = {};
   res.statusCode = 200;
@@ -31,10 +30,10 @@ function mockResponse() {
   return res;
 }
 
-// ⚠️ IMPORTA el controlador DESPUÉS de mockear el pool
+//Importar el controlador después de mockear el pool
 import * as proveedorController from "../../controllers/proveedores.controllers.js";
 
-// 🧪 Prueba 1: getProveedores
+// Prueba 1: getProveedores
 async function testGetProveedores() {
   console.log("🔍 Test: getProveedores");
   pool.query = async () => proveedoresMock;
@@ -50,7 +49,7 @@ async function testGetProveedores() {
   console.log("✅ getProveedores pasó la prueba\n");
 }
 
-// 🧪 Prueba 2: getProveedorById
+// Prueba 2: getProveedorById
 async function testGetProveedorById() {
   console.log("🔍 Test: getProveedorById");
   pool.query = async () => ({ rows: [proveedoresMock.rows[0]] });
@@ -65,11 +64,11 @@ async function testGetProveedorById() {
   console.log("✅ getProveedorById pasó la prueba\n");
 }
 
-// 🧪 Prueba 3: createTipoProveedor
+// Prueba 3: createTipoProveedor
 async function testCreateTipoProveedor() {
   console.log("🔍 Test: createTipoProveedor");
   
-  // Mock que simula exactamente lo que devuelve PostgreSQL
+ 
   const mockInsertResult = {
     rows: [{
       id_tipoproveedor: 1,
@@ -91,7 +90,7 @@ async function testCreateTipoProveedor() {
 
   await proveedorController.createTipoProveedor(req, res);
 
-  // Verificaciones actualizadas para los nombres reales de columnas
+  // Verificaciones actualizadas para los nombres de cada columna 
   console.assert(res.statusCode === 201, "❌ Código incorrecto", res.statusCode);
   console.assert(res.data.id_tipoproveedor === 1, "❌ ID incorrecto", res.data);
   console.assert(res.data.nombre_tipoproveedor === "Servicios", "❌ Nombre incorrecto", res.data);
@@ -99,7 +98,7 @@ async function testCreateTipoProveedor() {
   console.log("✅ createTipoProveedor pasó la prueba\n");
 }
 
-// Ejecuta todas las pruebas
+// Ejecutar
 (async function runTests() {
   await testGetProveedores();
   await testGetProveedorById();

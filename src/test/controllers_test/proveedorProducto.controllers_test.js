@@ -1,7 +1,7 @@
 import * as proveedorProductoController from "../../controllers/proveedorproducto.controllers.js";
 import { pool } from "../../db.js";
 
-// Backup del query real
+
 const originalQuery = pool.query;
 
 // Mock temporal
@@ -74,7 +74,7 @@ const test = async (desc, fn) => {
   }
 };
 
-// Tests
+// Test
 await test("getProveedoresByProducto retorna lista de proveedores", async () => {
   const req = { params: { id_producto: "456" } };
   const res = mockRes();
@@ -125,5 +125,5 @@ await test("desasociarProveedorDeProducto retorna 404 si no se encuentra la asoc
   }
 });
 
-// Restaurar query original
+
 pool.query = originalQuery;

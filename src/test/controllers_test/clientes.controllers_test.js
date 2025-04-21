@@ -54,11 +54,11 @@ pool.query = async (query, params) => {
   }
 
   if (query.startsWith("INSERT INTO CLIENTENATURAL")) {
-    return {}; // no importa el resultado
+    return {}; 
   }
 
   if (query.startsWith("INSERT INTO CLIENTEJURIDICO")) {
-    return {}; // no importa el resultado
+    return {}; 
   }
 
   if (query.includes("FROM CLIENTE") && query.includes("CLIENTENATURAL") && query.includes("CLIENTEJURIDICO")) {

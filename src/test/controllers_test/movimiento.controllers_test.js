@@ -1,5 +1,5 @@
 import * as movimientoController from "../../controllers/movimiento.controller.js";
-import { pool } from "../../db.js"; // <-- Asegúrate de importar el pool
+import { pool } from "../../db.js"; 
 
 let queryCalls = [];
 
@@ -47,7 +47,7 @@ const mockPool = {
   },
 };
 
-//Reemplazo del método query del pool
+
 pool.query = mockPool.query;
 
 

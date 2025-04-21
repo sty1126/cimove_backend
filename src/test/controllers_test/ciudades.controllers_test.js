@@ -44,8 +44,8 @@ await getCiudades({}, createMockResponse());
 
 // Test createCiudad con nombre válido
 console.log("\n=== Test: createCiudad (válido) ===");
-await createCiudad({ body: { nombre_ciudad: "Medellin" } }, createMockResponse());
+await createCiudad({ body: { nombre_ciudad: "Bogotá" } }, createMockResponse());
 
-// Test createCiudad sin nombre (debe dar error 400)
+// Test createCiudad sin nombre (debe dar resultado tipo error 400)
 console.log("\n=== Test: createCiudad (sin nombre) ===");
 await createCiudad({ body: {} }, createMockResponse());

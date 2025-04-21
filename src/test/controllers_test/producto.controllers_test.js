@@ -25,9 +25,8 @@ const createMockRes = () => {
   };
 };
 
-// =======================
-// TESTS
-// =======================
+
+// Tests
 
 const testGetProducto = async () => {
   const req = { params: { productoId: 1 } };
@@ -183,9 +182,9 @@ const testGetProveedoresPorProducto = async () => {
   console.log("Response:", res.body);
 };
 
-// =======================
+
 // Ejecutar todas las pruebas
-// =======================
+
 await testGetProducto();
 await testGetProductos();
 await testCreateProducto();
