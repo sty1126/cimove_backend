@@ -105,7 +105,7 @@ await test("createSede falla si faltan datos", async () => {
   }
 });
 
-await test("deactivateSede desactiva sede correctamente", async () => {
+await test("desactiva sede correctamente", async () => {
   const req = { params: { id_sede: "1" } };
   const res = mockRes();
   await sedeController.deactivateSede(req, res);
@@ -114,7 +114,7 @@ await test("deactivateSede desactiva sede correctamente", async () => {
   }
 });
 
-await test("deactivateSede retorna 404 si sede no existe", async () => {
+await test("retorna 404 si sede no existe", async () => {
   const req = { params: { id_sede: "not-found" } };
   const res = mockRes();
   await sedeController.deactivateSede(req, res);

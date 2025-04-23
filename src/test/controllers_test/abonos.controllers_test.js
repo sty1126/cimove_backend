@@ -1,4 +1,3 @@
-// 👇 Importa y mockea el pool antes del controlador
 import { pool } from "../../db.js";
 
 // Mock de respuesta
@@ -37,10 +36,10 @@ const abonosMock = {
   ]
 };
 
-// ⚠️ Importa el controlador DESPUÉS de mockear el pool
+//Importar el controlador después de mockear el pool
 import * as abonosController from "../../controllers/abonos.controllers.js";
 
-// 🧪 Prueba 1: getAbonos
+// Prueba 1: getAbonos
 async function testGetAbonos() {
   console.log("🔍 Test: getAbonos");
   pool.query = async () => abonosMock;
@@ -57,7 +56,7 @@ async function testGetAbonos() {
   console.log("✅ getAbonos pasó la prueba\n");
 }
 
-// 🧪 Prueba 2: createAbono
+// Prueba 2: createAbono
 async function testCreateAbono() {
   console.log("🔍 Test: createAbono");
   
@@ -90,7 +89,7 @@ async function testCreateAbono() {
   console.log("✅ createAbono pasó la prueba\n");
 }
 
-// 🧪 Prueba 3: getAbonosPorFactura
+// Prueba 3: getAbonosPorFactura
 async function testGetAbonosPorFactura() {
   console.log("🔍 Test: getAbonosPorFactura");
   
@@ -111,7 +110,7 @@ async function testGetAbonosPorFactura() {
   console.log("✅ getAbonosPorFactura pasó la prueba\n");
 }
 
-// 🧪 Prueba 4: anularAbono
+// Prueba 4: anularAbono
 async function testAnularAbono() {
   console.log("🔍 Test: anularAbono");
   
@@ -133,7 +132,7 @@ async function testAnularAbono() {
   console.log("✅ anularAbono pasó la prueba\n");
 }
 
-// 🧪 Prueba 5: getTotalAbonadoPorFactura
+// Prueba 5: getTotalAbonadoPorFactura
 async function testGetTotalAbonadoPorFactura() {
   console.log("🔍 Test: getTotalAbonadoPorFactura");
   
@@ -154,7 +153,7 @@ async function testGetTotalAbonadoPorFactura() {
   console.log("✅ getTotalAbonadoPorFactura pasó la prueba\n");
 }
 
-// 🧪 Prueba 6: createAbono - Validación de campos
+// Prueba 6: createAbono - Validación de campos
 async function testCreateAbonoValidacion() {
   console.log("🔍 Test: createAbono - Validación de campos");
   
@@ -168,7 +167,7 @@ async function testCreateAbonoValidacion() {
   console.log("✅ createAbono - Validación pasó la prueba\n");
 }
 
-// 🧪 Prueba 7: anularAbono - Abono no encontrado
+// Prueba 7: anularAbono - Abono no encontrado
 async function testAnularAbonoNoEncontrado() {
   console.log("🔍 Test: anularAbono - Abono no encontrado");
   
@@ -184,7 +183,7 @@ async function testAnularAbonoNoEncontrado() {
   console.log("✅ anularAbono - No encontrado pasó la prueba\n");
 }
 
-// Ejecuta todas las pruebas
+// Ejecutar todas las pruebas
 (async function runTests() {
   await testGetAbonos();
   await testCreateAbono();

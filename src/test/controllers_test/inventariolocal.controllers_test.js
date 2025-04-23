@@ -7,14 +7,14 @@ const mockPool = {
   query: async (sql, params) => {
     queryData.push({ sql, params });
 
-    // Simula verificación de existencia del producto en sede (para evitar conflicto)
+    // Simula verificación de existencia del producto en sede, con el fin de evitar conflicto
     if (sql.includes("SELECT * FROM inventariolocal WHERE id_producto_inventariolocal =") &&
         sql.includes("AND id_sede_inventariolocal =")) {
       // Retornar vacío para que permita el insert
       return { rows: [] };
     }
 
-    // Otros mocks para select por id
+    // Mocks para select por id
     if (sql.includes("SELECT * FROM inventariolocal WHERE id_inventariolocal =")) {
       return {
         rows: params[0] === 1 ? [{ id_inventariolocal: 1, existencia_inventariolocal: 10 }] : [],

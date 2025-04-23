@@ -18,7 +18,7 @@ const mockQuery = async (sql, params) => {
   throw new Error("Consulta no soportada");
 };
 
-// Sobrescribimos temporalmente pool.query para pruebas
+// Se sobreescribe temporalmente pool.query para la prueba
 pool.query = async () => ({
     rows: [{ id: 1, nombre: 'Categoría Prueba A' }],
   });
