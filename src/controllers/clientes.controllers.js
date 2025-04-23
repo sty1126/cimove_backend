@@ -366,3 +366,30 @@ export const eliminarCliente = async (req, res) => {
     res.status(500).json({ message: "Error al eliminar cliente." });
   }
 };
+
+// Obtener clientes por ID de sede
+export const getClientesPorSede = async (req, res) => {
+  const { idSede } = req.params;
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        C.*, TC.descripcion_tipocliente,
+        CN.NOMBRE_CLIENTE, CN.APELLIDO_CLIENTE, CN.FECHANACIMIENTO_CLIENTE, CN.GENERO_CLIENTE,
+        CJ.RAZONSOCIAL_CLIENTE, CJ.NOMBRECOMERCIAL_CLIENTE, CJ.REPRESENTANTE_CLIENTE, CJ.DIGITOVERIFICACION_CLIENTE
+      FROM CLIENTE C
+      JOIN TIPOCLIENTE TC ON C.ID_TIPOCLIENTE_CLIENTE = TC.ID_TIPOCLIENTE
+      LEFT JOIN CLIENTENATURAL CN ON C.ID_CLIENTE = CN.ID_CLIENTE
+      LEFT JOIN CLIENTEJURIDICO CJ ON C.ID_CLIENTE = CJ.ID_CLIENTE
+      WHERE C.ID_SEDE_CLIENTE = $1 AND C.ESTADO_CLIENTE = 'A'
+    `,
+      [idSede]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al obtener clientes por sede:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};

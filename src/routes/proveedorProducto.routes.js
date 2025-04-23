@@ -18,6 +18,6 @@ router.get("/:id_producto", getProveedoresByProducto);
 router.post("/", asociarProveedorAProducto);
 
 // ❌ Quitar la relación
-router.delete("/:id_proveedorproducto", desasociarProveedorDeProducto);
+router.put("/:id_proveedorproducto", desasociarProveedorDeProducto);
 
 export default router;
