@@ -41,6 +41,7 @@ export const createFacturaProveedor = async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: "Error al crear la factura del proveedor" });
+    console.log(error)
   }
 };
 
@@ -193,3 +194,23 @@ export const generarFacturaDesdeOrden = async (req, res) => {
     client.release();
   }
 };
+  export const getFacturaProveedorById = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT * FROM facturaproveedor WHERE id_facturaproveedor = $1`,
+        [id]
+      );
+  
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Factura no encontrada" });
+      }
+  
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Error al obtener factura:", error);
+      res.status(500).json({ error: "Error al obtener factura" });
+    }
+};
+  
+

@@ -4,6 +4,7 @@ import {
   createFacturaProveedor,
   getProductosOrdenParaFactura,
   generarFacturaDesdeOrden,
+  getFacturaProveedorById,
 } from "../controllers/facturasProveedores.controllers.js";
 
 const router = express.Router();
@@ -11,6 +12,8 @@ const router = express.Router();
 router.get("/", getFacturasProveedor);
 router.post("/", createFacturaProveedor);
 router.get("/facturas/orden/:id_ordencompra", getProductosOrdenParaFactura);
-router.post("/facturas/generar-desde-orden", generarFacturaDesdeOrden);
+router.post("/generar-desde-orden", generarFacturaDesdeOrden);
+router.get("/:id", getFacturaProveedorById);
+
 
 export default router;
