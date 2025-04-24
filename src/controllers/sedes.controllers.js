@@ -72,3 +72,24 @@ export const deactivateSede = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+
+// Obtener id_sede por nombre de sede
+export const getSedeByNombre = async (req, res) => {
+  const { nombre_sede } = req.params;
+
+  try {
+    const result = await pool.query(
+      "SELECT id_sede FROM SEDE WHERE nombre_sede = $1 AND estado_sede = 'A'",
+      [nombre_sede]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Sede no encontrada" });
+    }
+
+    res.json(result.rows[0]); // Devuelve el id_sede
+  } catch (error) {
+    console.error("Error al obtener sede por nombre:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};

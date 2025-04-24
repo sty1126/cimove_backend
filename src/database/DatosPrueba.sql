@@ -186,3 +186,4 @@ VALUES
   ('Crédito', 3, 'A 15 días'),
   ('Nequi', 1.5, 'Inmediata'),
   ('Daviplata', 1.5, 'Inmediata');
+

@@ -1,6 +1,4 @@
 import { pool } from "../db.js";
-
-// Registrar factura con detalles
 export const createFactura = async (req, res) => {
   const {
     fecha,
@@ -12,7 +10,7 @@ export const createFactura = async (req, res) => {
     aplicaGarantia,
     fechaGarantia,
     saldo,
-    detalles, // array de objetos: [{ idProducto, cantidad, precioVenta, valorIVA }]
+    detalles, // array de objetos: [{ idProducto, cantidad, precioVenta, valorIVA, idSede }]
   } = req.body;
 
   const client = await pool.connect();
@@ -20,7 +18,8 @@ export const createFactura = async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // Insertar en FACTURA
+    const fechaFactura = fecha || new Date(); // si no viene fecha, se usa la actual
+
     const resultFactura = await client.query(
       `INSERT INTO FACTURA (
         FECHA_FACTURA, ID_CLIENTE_FACTURA, TOTAL_FACTURA,
@@ -29,23 +28,26 @@ export const createFactura = async (req, res) => {
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING ID_FACTURA`,
       [
-        fecha,
-        idCliente,
+        fechaFactura,
+        idCliente || null,
         total,
         descuento,
         iva,
         subtotal,
         aplicaGarantia,
-        fechaGarantia,
+        fechaGarantia || null,
         saldo,
       ]
     );
 
     const idFactura = resultFactura.rows[0].id_factura;
 
-    // Insertar detalles
     for (const item of detalles) {
-      const { idProducto, cantidad, precioVenta, valorIVA } = item;
+      const { idProducto, cantidad, precioVenta, valorIVA, idSede } = item;
+
+      if (!idSede) {
+        throw new Error(`Falta idSede para el producto ${idProducto}`);
+      }
 
       await client.query(
         `INSERT INTO DETALLEFACTURA (
@@ -56,19 +58,19 @@ export const createFactura = async (req, res) => {
         [idFactura, idProducto, cantidad, precioVenta, valorIVA]
       );
 
-      // Descontar del INVENTARIOLOCAL (debes pasar sede en detalles o definirla globalmente)
       await client.query(
         `UPDATE INVENTARIOLOCAL
          SET EXISTENCIA_INVENTARIOLOCAL = EXISTENCIA_INVENTARIOLOCAL - $1
          WHERE ID_PRODUCTO_INVENTARIOLOCAL = $2 AND ID_SEDE_INVENTARIOLOCAL = $3`,
-        [cantidad, idProducto, item.idSede] // `idSede` debe venir desde frontend
+        [cantidad, idProducto, idSede]
       );
     }
 
     await client.query("COMMIT");
-    res
-      .status(201)
-      .json({ message: "Factura registrada con éxito", idFactura });
+    res.status(201).json({
+      message: "Factura registrada con éxito",
+      idFactura,
+    });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error registrando factura:", error);

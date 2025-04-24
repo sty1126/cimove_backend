@@ -9,6 +9,7 @@ import {
   getClientesFormateados,
   updateCliente,
   eliminarCliente,
+  getClientesPorSede,
 } from "../controllers/clientes.controllers.js";
 
 const router = Router();
@@ -22,5 +23,6 @@ router.get("/tipos-cliente", getTiposCliente);
 router.put("/:id", updateCliente);
 router.post("/", crearCliente);
 router.put("/eliminar/:id", eliminarCliente);
+router.get("/sede/:idSede", getClientesPorSede);
 
 export default router;

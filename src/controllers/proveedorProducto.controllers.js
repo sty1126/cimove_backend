@@ -22,7 +22,6 @@ export const getProveedoresByProducto = async (req, res) => {
 };
 
 // Asociar un proveedor a un producto
-// Asociar un proveedor a un producto
 export const asociarProveedorAProducto = async (req, res) => {
   try {
     const { id_proveedor_proveedorproducto, id_producto_proveedorproducto } =
