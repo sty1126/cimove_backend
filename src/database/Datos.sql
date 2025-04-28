@@ -57,3 +57,22 @@ VALUES
   ('Administrador', 'A'),
   ('Vendedor', 'A');
 
+INSERT INTO PROVEEDOR (
+    id_proveedor, nombre_proveedor, id_ciudad_proveedor, direccion_proveedor, 
+    telefono_proveedor, email_proveedor, id_tipoproveedor_proveedor, representante_proveedor, 
+    fecharegistro_proveedor, saldo_proveedor, digitoverificacion_proveedor
+) 
+VALUES (
+    'PROV_TEMP_123', 
+    'Proveedor Temporal', 
+    '11.001',  
+    'Dirección temporal', 
+    '123456789', 
+    'temporal@proveedor.com', 
+    2,  
+    'Representante Temporal', 
+    CURRENT_DATE, 
+    0, 
+    '0'  
+) 
+RETURNING id_proveedor;

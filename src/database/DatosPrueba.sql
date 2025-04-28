@@ -176,7 +176,7 @@ INSERT INTO SALARIO (
 VALUES
   (1, 3500000, 'Mensual', 'A'),  -- María Pérez, Admin
   (2, 2500000, 'Quincenal', 'A'), -- Carlos García, Vendedor
-  (3, 2400000, 'Mensual', 'A');   -- Lucía Moreno, Vendedora
+  (3, 2400000, 'Mensual', 'A');   -- Lucía Moreno,a Vendedora
 
 INSERT INTO TIPOMETODOPAGO (NOMBRE_TIPOMETODOPAGO, COMISION_TIPOMETODOPAGO, RECEPCION_TIPOMETODOPAGO)
 VALUES 
@@ -187,3 +187,7 @@ VALUES
   ('Nequi', 1.5, 'Inmediata'),
   ('Daviplata', 1.5, 'Inmediata');
 
+INSERT INTO EMPLEADO (ID_EMPLEADO, ID_SEDE_EMPLEADO, ID_TIPODOCUMENTO_EMPLEADO, NOMBRE_EMPLEADO, TELEFONO_EMPLEADO, CARGO_EMPLEADO, EMAIL_EMPLEADO, ESTADO_EMPLEADO)
+VALUES
+(99, 1, 1, 'Administrador General', '3001234567', 'Administrador', 'admin@cimove.com', 'A'),
+(10, 1, 1, 'Vendedor Principal', '3007654321', 'Vendedor', 'vendedor@cimove.com', 'A');
