@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 // Crear un nuevo usuario con la contraseña hasheada
 export const createUsuario = async (req, res) => {
