@@ -83,18 +83,85 @@ export const createFactura = async (req, res) => {
 export const getFacturas = async (req, res) => {
   try {
     const result = await pool.query(`
-    SELECT 
-    f.*,
-    df.*,
-    c.*,
-    p.*
-    FROM FACTURA f
-    LEFT JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
-    LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
-    LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
-    WHERE f.ESTADO_FACTURA = 'A';
-      `);
-    res.json(result.rows);
+      SELECT 
+        f.ID_FACTURA,
+        f.FECHA_FACTURA,
+        f.TOTAL_FACTURA,
+        f.SUBTOTAL_FACTURA,
+        f.IVA_FACTURA,
+        f.ESTADO_FACTURA,
+        f.ID_CLIENTE_FACTURA,
+
+        c.ID_CLIENTE,
+        cn.NOMBRE_CLIENTE AS NOMBRE_NATURAL,
+        cn.APELLIDO_CLIENTE,
+        cj.RAZONSOCIAL_CLIENTE AS RAZON_JURIDICA,
+
+        df.ID_DETALLEFACTURA,
+        df.CANTVENDIDA_DETALLEFACTURA,
+        df.PRECIOVENTA_DETALLEFACTURA,
+        df.ID_PRODUCTO_DETALLEFACTURA,
+
+        p.ID_PRODUCTO,
+        p.NOMBRE_PRODUCTO
+
+      FROM FACTURA f
+      LEFT JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
+      LEFT JOIN CLIENTENATURAL cn ON c.ID_CLIENTE = cn.ID_CLIENTE
+      LEFT JOIN CLIENTEJURIDICO cj ON c.ID_CLIENTE = cj.ID_CLIENTE
+      LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
+      LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
+      WHERE f.ESTADO_FACTURA = 'A';
+    `);
+
+    const facturasMap = new Map();
+
+    for (const row of result.rows) {
+      const idFactura = row.id_factura;
+
+      if (!facturasMap.has(idFactura)) {
+        let nombreCliente = null;
+
+        if (row.razon_juridica) {
+          nombreCliente = row.razon_juridica;
+        } else if (row.nombre_natural && row.apellido_cliente) {
+          nombreCliente = `${row.nombre_natural} ${row.apellido_cliente}`;
+        }
+
+        facturasMap.set(idFactura, {
+          id_factura: row.id_factura,
+          fecha_factura: row.fecha_factura,
+          total_factura: row.total_factura,
+          subtotal_factura: row.subtotal_factura,
+          iva_factura: row.iva_factura,
+          estado_factura: row.estado_factura,
+          cliente: row.id_cliente
+            ? {
+                id_cliente: row.id_cliente,
+                nombre_cliente: nombreCliente,
+              }
+            : null,
+          detalles: [],
+        });
+      }
+
+      if (row.id_detallefactura) {
+        facturasMap.get(idFactura).detalles.push({
+          id_detallefactura: row.id_detallefactura,
+          cantidad: row.cantvendida_detallefactura,
+          precio_unitario: row.precioventa_detallefactura,
+          producto: row.id_producto
+            ? {
+                id_producto: row.id_producto,
+                nombre_producto: row.nombre_producto,
+              }
+            : null,
+        });
+      }
+    }
+
+    const facturas = Array.from(facturasMap.values());
+    res.json(facturas);
   } catch (error) {
     console.error("Error obteniendo facturas:", error);
     res.status(500).json({ error: "Error al listar las facturas" });
