@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { PORT } from "./config.js";
-import { pool } from "./db.js";
 import productosRoutes from "./routes/productos.routes.js";
 import inventarioRoutes from "./routes/inventario.routes.js";
 import inventarioLocalRoutes from "./routes/inventariolocal.routes.js";
@@ -34,34 +33,8 @@ app.use(cors()); // CORS
 app.use(express.json()); // Uso de json
 
 // Ruta de prueba (Health Check)
-app.get("/", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT *
-      FROM CLIENTES
-      
-    `);
-
-    const tables = result.rows.map(row => row.table_name);
-
-    if (tables.length === 0) {
-      return res.status(200).json({
-        message: "Servidor corriendo 🚀 pero no se encontraron tablas en el esquema 'public'.",
-        tables: []
-      });
-    }
-
-    return res.status(200).json({
-      message: "Servidor corriendo correctamente 🚀",
-      tables: tables
-    });
-  } catch (error) {
-    console.error("Error al consultar la base de datos:", error);
-    return res.status(500).json({
-      message: "Error al consultar la base de datos ❌",
-      error: error.message
-    });
-  }
+app.get("/", (req, res) => {
+  res.send("Servidor corriendo correctamente 🚀");
 });
 
 // rutas de la API
