@@ -1,11 +1,5 @@
-import pg from "pg"; 
-import {
-  DB_DATABASE,
-  DB_HOST,
-  DB_PASSWORD,
-  DB_PORT,
-  DB_USER,
-} from "./config.js";
+import pg from "pg";
+import { DB_URL } from "./config.js";
 
 export const pool = new pg.Pool({
   user: DB_USER,
@@ -14,4 +8,8 @@ export const pool = new pg.Pool({
   database: DB_DATABASE,
   port: DB_PORT,
   ssl: false,
+  connectionString: DB_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
