@@ -29,15 +29,33 @@ import estadisticasRoutes from "./routes/estadisticas.routes.js";
 
 const app = express();
 
-app.use(cors()); // CORS
-app.use(express.json()); // Uso de json
+// Configuración de CORS
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://cimove-frontend.onrender.com", // Reemplaza con la URL real de tu frontend
+];
 
-// Ruta de prueba (Health Check)
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+
+// Ruta de prueba
 app.get("/", (req, res) => {
   res.send("Servidor corriendo correctamente 🚀");
 });
 
-// rutas de la API
+// Rutas de la API
 app.use("/api/productos", productosRoutes);
 app.use("/api/inventario", inventarioRoutes);
 app.use("/api/inventariolocal", inventarioLocalRoutes);
@@ -64,8 +82,8 @@ app.use("/api/serviciotecnico", servicioTecnicoRoutes);
 app.use("/api/usuario", usuarioRoutes);
 app.use("/api/estadisticas", estadisticasRoutes);
 
-// Puerto para Render
+// Puerto
 const port = process.env.PORT || PORT;
 app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
+  console.log("Servidor corriendo en el puerto ${port}");
 });
