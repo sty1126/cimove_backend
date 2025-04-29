@@ -32,6 +32,11 @@ const app = express();
 app.use(cors()); // CORS
 app.use(express.json()); // Uso de json
 
+// Ruta de prueba (Health Check)
+app.get("/", (req, res) => {
+  res.send("Servidor corriendo correctamente 🚀");
+});
+
 // rutas de la API
 app.use("/api/productos", productosRoutes);
 app.use("/api/inventario", inventarioRoutes);
@@ -59,6 +64,8 @@ app.use("/api/serviciotecnico", servicioTecnicoRoutes);
 app.use("/api/usuario", usuarioRoutes);
 app.use("/api/estadisticas", estadisticasRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// Puerto para Render
+const port = process.env.PORT || PORT;
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });

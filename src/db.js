@@ -1,4 +1,4 @@
-import pg from "pg";
+import pg from "pg"; 
 import {
   DB_DATABASE,
   DB_HOST,
@@ -13,9 +13,7 @@ export const pool = new pg.Pool({
   password: DB_PASSWORD,
   database: DB_DATABASE,
   port: DB_PORT,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
-
-// Para comprobar si la conexión funciona, pidiendo una simple fecha
-// pool.query("SELECT NOW()").then((result) => {
-//  console.log(result);
-// });
