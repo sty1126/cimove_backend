@@ -25,6 +25,7 @@ import facturaElectronicaRoutes from "./routes/facturaElectronica.routes.js";
 import facturaRoutes from "./routes/factura.routes.js";
 import servicioTecnicoRoutes from "./routes/servicioTecnico.routes.js";
 import usuarioRoutes from "./routes/usuario.routes.js";
+import estadisticasRoutes from "./routes/estadisticas.routes.js";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/factura-electronica", facturaElectronicaRoutes);
 app.use("/api/factura", facturaRoutes);
 app.use("/api/serviciotecnico", servicioTecnicoRoutes);
 app.use("/api/usuario", usuarioRoutes);
+app.use("/api/estadisticas", estadisticasRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

@@ -83,12 +83,16 @@ export const createFactura = async (req, res) => {
 export const getFacturas = async (req, res) => {
   try {
     const result = await pool.query(`
-        SELECT f.*, df.*, c.*, p.*
-        FROM FACTURA f
-        JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
-        LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
-        LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
-        WHERE f.ESTADO_FACTURA = 'A'
+    SELECT 
+    f.*,
+    df.*,
+    c.*,
+    p.*
+    FROM FACTURA f
+    LEFT JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
+    LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
+    LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
+    WHERE f.ESTADO_FACTURA = 'A';
       `);
     res.json(result.rows);
   } catch (error) {

@@ -50,8 +50,6 @@ export const createUsuario = async (req, res) => {
 // Función para verificar la contraseña
 export const checkPassword = async (email_usuario, contrasena_ingresada) => {
   try {
-    console.log("Email recibido:", email_usuario);
-
     const result = await pool.query(
       `SELECT 
           usuario.id_empleado_usuario,
@@ -66,8 +64,6 @@ export const checkPassword = async (email_usuario, contrasena_ingresada) => {
       [email_usuario]
     );
 
-    console.log("Usuario encontrado:", result);
-
     if (result.rowCount === 0) {
       return null; // Usuario no encontrado
     }
@@ -80,9 +76,6 @@ export const checkPassword = async (email_usuario, contrasena_ingresada) => {
       contrasena_usuario,
     } = result.rows[0];
 
-    console.log("Hash almacenado:", contrasena_usuario);
-    console.log("Contraseña ingresada:", contrasena_ingresada);
-
     if (!contrasena_usuario) {
       console.error("El hash almacenado no existe");
       return false;
@@ -92,7 +85,6 @@ export const checkPassword = async (email_usuario, contrasena_ingresada) => {
       contrasena_ingresada,
       contrasena_usuario
     );
-    console.log("¿Las contraseñas coinciden?", isMatch);
 
     if (isMatch) {
       // Devuelve toda la info que necesitas

@@ -191,3 +191,14 @@ INSERT INTO EMPLEADO (ID_EMPLEADO, ID_SEDE_EMPLEADO, ID_TIPODOCUMENTO_EMPLEADO, 
 VALUES
 (99, 1, 1, 'Administrador General', '3001234567', 'Administrador', 'admin@cimove.com', 'A'),
 (10, 1, 1, 'Vendedor Principal', '3007654321', 'Vendedor', 'vendedor@cimove.com', 'A');
+
+INSERT INTO public.usuario (
+    id_empleado_usuario,
+    contrasena_usuario,
+    email_usuario,
+    telefono_usuario,
+    id_tipousuario_usuario,
+    estado_usuario
+) VALUES
+(99, '$2b$10$DQrUQprpfBzpLDwWndFsB.kToRiltDjcgqZev1n6UNVc.vOMWsjp6', 'admin@cimove.com', '3001234567', 1, 'A'),
+(10, '$2b$10$WecVFLYgkCNS1lRUEZmUBus3c1/qGc45kXDHe05gftCji7IrETWV6', 'vendedor@cimove.com', '3007654321', 2, 'A');
