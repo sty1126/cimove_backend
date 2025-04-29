@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PORT } from "./config.js";
+import { pool } from "./db.js";
 import productosRoutes from "./routes/productos.routes.js";
 import inventarioRoutes from "./routes/inventario.routes.js";
 import inventarioLocalRoutes from "./routes/inventariolocal.routes.js";
