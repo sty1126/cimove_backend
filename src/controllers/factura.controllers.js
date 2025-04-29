@@ -100,3 +100,32 @@ export const getFacturas = async (req, res) => {
     res.status(500).json({ error: "Error al listar las facturas" });
   }
 };
+
+export const getFacturaById = async (req, res) => {
+  const { idFactura } = req.params;
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        f.*, 
+        df.*, 
+        p.*
+      FROM FACTURA f
+      LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
+      LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
+      WHERE f.ID_FACTURA = $1
+    `,
+      [idFactura]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Factura no encontrada" });
+    }
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error obteniendo factura por ID:", error);
+    res.status(500).json({ error: "Error al obtener la factura" });
+  }
+};
