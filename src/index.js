@@ -32,7 +32,7 @@ const app = express();
 // Configuración de CORS
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://cimove-frontend.onrender.com", // Reemplaza con la URL real de tu frontend
+  "https://cimove-frontend.onrender.com",
 ];
 
 app.use(
