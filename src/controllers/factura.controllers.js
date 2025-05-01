@@ -80,8 +80,7 @@ export const createFactura = async (req, res) => {
         `INSERT INTO METODOPAGO (
           ID_FACTURA_METODOPAGO,
           ID_TIPOMETODOPAGO_METODOPAGO,
-          MONTO_METODOPAGO,
-          ESTADO_METODOPAGO
+          MONTO_METODOPAGO
         ) VALUES ($1, $2, $3)`,
         [idFactura, idTipoMetodoPago, monto]
       );
