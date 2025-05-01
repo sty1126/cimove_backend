@@ -123,41 +123,65 @@ export const createFactura = async (req, res) => {
 export const getFacturas = async (req, res) => {
   try {
     const result = await pool.query(`
-    SELECT 
-    f.ID_FACTURA,
-    f.FECHA_FACTURA,
-    f.TOTAL_FACTURA,
-    f.SUBTOTAL_FACTURA,
-    f.IVA_FACTURA,
-    f.ESTADO_FACTURA,
-    f.ID_CLIENTE_FACTURA,
+      SELECT 
+        f.ID_FACTURA,
+        f.FECHA_FACTURA,
+        f.TOTAL_FACTURA,
+        f.SUBTOTAL_FACTURA,
+        f.IVA_FACTURA,
+        f.ESTADO_FACTURA,
+        f.ID_CLIENTE_FACTURA,
 
-    c.ID_CLIENTE,
-    cn.NOMBRE_CLIENTE AS NOMBRE_NATURAL,
-    cn.APELLIDO_CLIENTE,
-    cj.RAZONSOCIAL_CLIENTE AS RAZON_JURIDICA,
+        c.ID_CLIENTE,
+        cn.NOMBRE_CLIENTE AS NOMBRE_NATURAL,
+        cn.APELLIDO_CLIENTE,
+        cj.RAZONSOCIAL_CLIENTE AS RAZON_JURIDICA,
 
-    df.ID_DETALLEFACTURA,
-    df.CANTVENDIDA_DETALLEFACTURA,
-    df.PRECIOVENTA_DETALLEFACTURA,
-    df.ID_PRODUCTO_DETALLEFACTURA,
+        df.ID_DETALLEFACTURA,
+        df.CANTVENDIDA_DETALLEFACTURA,
+        df.PRECIOVENTA_DETALLEFACTURA,
+        df.ID_PRODUCTO_DETALLEFACTURA,
 
-      p.ID_PRODUCTO,
-      p.NOMBRE_PRODUCTO
+        p.ID_PRODUCTO,
+        p.NOMBRE_PRODUCTO
 
-    FROM FACTURA f
-    LEFT JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
-    LEFT JOIN CLIENTENATURAL cn ON c.ID_CLIENTE = cn.ID_CLIENTE
-    LEFT JOIN CLIENTEJURIDICO cj ON c.ID_CLIENTE = cj.ID_CLIENTE
-    LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
-    LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
-    WHERE f.ESTADO_FACTURA = 'A'
-      AND df.ID_DETALLEFACTURA IS NOT NULL;
-
+      FROM FACTURA f
+      LEFT JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
+      LEFT JOIN CLIENTENATURAL cn ON c.ID_CLIENTE = cn.ID_CLIENTE
+      LEFT JOIN CLIENTEJURIDICO cj ON c.ID_CLIENTE = cj.ID_CLIENTE
+      LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
+      LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
+      WHERE f.ESTADO_FACTURA = 'A'
+        AND df.ID_DETALLEFACTURA IS NOT NULL;
     `);
 
-    const facturasMap = new Map();
+    // 🔹 Obtener los métodos de pago por separado
+    const metodosPagoResult = await pool.query(`
+      SELECT 
+        mp.ID_FACTURA_METODOPAGO,
+        mp.MONTO_METODOPAGO,
+        tmp.ID_TIPOMETODOPAGO,
+        tmp.NOMBRE_TIPOMETODOPAGO
+      FROM METODOPAGO mp
+      JOIN TIPOMETODOPAGO tmp ON mp.ID_TIPOMETODOPAGO_METODOPAGO = tmp.ID_TIPOMETODOPAGO;
+    `);
 
+    // 🔹 Agrupar métodos de pago por factura
+    const metodosPagoMap = new Map();
+    for (const mp of metodosPagoResult.rows) {
+      const idFactura = mp.id_factura_metodopago;
+      if (!metodosPagoMap.has(idFactura)) {
+        metodosPagoMap.set(idFactura, []);
+      }
+      metodosPagoMap.get(idFactura).push({
+        id_tipo_metodo_pago: mp.id_tipometodopago,
+        nombre_tipo_metodo_pago: mp.nombre_tipometodopago,
+        monto: mp.monto_metodopago,
+      });
+    }
+
+    // 🔹 Armar resultado final
+    const facturasMap = new Map();
     for (const row of result.rows) {
       const idFactura = row.id_factura;
 
@@ -184,6 +208,7 @@ export const getFacturas = async (req, res) => {
               }
             : null,
           detalles: [],
+          metodos_pago: metodosPagoMap.get(idFactura) || [],
         });
       }
 
