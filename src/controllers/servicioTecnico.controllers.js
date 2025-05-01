@@ -1,19 +1,16 @@
 import { pool } from "../db.js";
-
 // Crear un nuevo servicio técnico
 export const createServicioTecnico = async (req, res) => {
   const client = await pool.connect(); // Para manejar transacción manualmente
   try {
     await client.query("BEGIN"); // Iniciar transacción
 
-    // Validar body
     if (!req.body) {
       return res
         .status(400)
         .json({ error: "No se envió body en la solicitud" });
     }
 
-    // Extraer los datos
     const {
       id_cliente,
       id_sede,
@@ -30,10 +27,9 @@ export const createServicioTecnico = async (req, res) => {
       fecha_garantia,
       numero_contacto_alternativo,
       autorizado,
-      metodos_pago = [], // métodos de pago opcionales
+      metodos_pago = [],
     } = req.body;
 
-    // Validaciones básicas
     if (
       !id_cliente ||
       !id_sede ||
@@ -45,33 +41,6 @@ export const createServicioTecnico = async (req, res) => {
       return res.status(400).json({
         error: "Faltan campos obligatorios para crear el servicio técnico",
       });
-    }
-
-    // Validar métodos de pago si hay abono
-    const totalMetodos = metodos_pago.reduce(
-      (sum, mp) => sum + (mp.monto || 0),
-      0
-    );
-
-    if (abono > 0) {
-      if (metodos_pago.length === 0) {
-        return res.status(400).json({
-          error: "Debe registrar al menos un método de pago para el abono",
-        });
-      }
-
-      if (totalMetodos !== abono) {
-        return res.status(400).json({
-          error:
-            "La suma de los montos de métodos de pago no coincide con el valor del abono",
-        });
-      }
-
-      if (metodos_pago.length > 2) {
-        return res.status(400).json({
-          error: "Solo se permiten hasta dos métodos de pago",
-        });
-      }
     }
 
     // Insertar factura
@@ -86,13 +55,11 @@ export const createServicioTecnico = async (req, res) => {
 
     const idFactura = facturaResult.rows[0].id_factura;
 
-    // Determinar proveedor (por defecto PROV_TEMP_123 si no se envía)
     const proveedorFinal =
       id_proveedor && id_proveedor.trim() !== ""
         ? id_proveedor
         : "PROV_TEMP_123";
 
-    // Insertar servicio técnico
     const servicioTecnicoResult = await client.query(
       `INSERT INTO SERVICIOTECNICO 
         (id_sede_serviciotecnico, id_proveedor_serviciotecnico, id_cliente_serviciotecnico, id_factura_serviciotecnico, 
@@ -126,9 +93,9 @@ export const createServicioTecnico = async (req, res) => {
       ]
     );
 
-    // Insertar métodos de pago (si hay abono)
-    if (abono > 0 && metodos_pago.length > 0) {
-      for (const metodo of metodos_pago) {
+    // Insertar métodos de pago si hay abono y metodos enviados
+    for (const metodo of metodos_pago) {
+      if (metodo?.id_tipo && metodo?.monto > 0) {
         await client.query(
           `INSERT INTO METODOPAGO 
             (id_factura_metodopago, id_tipometodopago_metodopago, monto_metodopago)
@@ -138,14 +105,14 @@ export const createServicioTecnico = async (req, res) => {
       }
     }
 
-    await client.query("COMMIT"); // Confirmar transacción
+    await client.query("COMMIT");
 
     res.status(201).json({
       message: "Servicio técnico creado exitosamente",
       servicioTecnico: servicioTecnicoResult.rows[0],
     });
   } catch (error) {
-    await client.query("ROLLBACK"); // Deshacer transacción si falla algo
+    await client.query("ROLLBACK");
     console.error("Error al crear servicio técnico:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   } finally {
