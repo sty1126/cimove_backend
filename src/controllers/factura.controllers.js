@@ -10,7 +10,8 @@ export const createFactura = async (req, res) => {
     aplicaGarantia,
     fechaGarantia,
     saldo,
-    detalles, // array de objetos: [{ idProducto, cantidad, precioVenta, valorIVA, idSede }]
+    detalles, // [{ idProducto, cantidad, precioVenta, valorIVA, idSede }]
+    metodosPago = [], // 🔹 <- Agregado aquí
   } = req.body;
 
   const client = await pool.connect();
@@ -18,7 +19,7 @@ export const createFactura = async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    const fechaFactura = fecha || new Date(); // si no viene fecha, se usa la actual
+    const fechaFactura = fecha || new Date();
 
     const resultFactura = await client.query(
       `INSERT INTO FACTURA (
@@ -42,6 +43,7 @@ export const createFactura = async (req, res) => {
 
     const idFactura = resultFactura.rows[0].id_factura;
 
+    // 🔸 Insertar detalles de la factura
     for (const item of detalles) {
       const { idProducto, cantidad, precioVenta, valorIVA, idSede } = item;
 
@@ -66,7 +68,27 @@ export const createFactura = async (req, res) => {
       );
     }
 
+    // 🔹 Insertar métodos de pago
+    for (const metodo of metodosPago) {
+      const { idTipoMetodoPago, monto } = metodo;
+
+      if (!idTipoMetodoPago || monto == null) {
+        throw new Error("Método de pago inválido");
+      }
+
+      await client.query(
+        `INSERT INTO METODOPAGO (
+          ID_FACTURA_METODOPAGO,
+          ID_TIPOMETODOPAGO_METODOPAGO,
+          MONTO_METODOPAGO,
+          ESTADO_METODOPAGO
+        ) VALUES ($1, $2, $3, 'aplicado')`,
+        [idFactura, idTipoMetodoPago, monto]
+      );
+    }
+
     await client.query("COMMIT");
+
     res.status(201).json({
       message: "Factura registrada con éxito",
       idFactura,
