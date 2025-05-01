@@ -6,14 +6,14 @@ export const createServicioTecnico = async (req, res) => {
   try {
     await client.query("BEGIN"); // Iniciar transacción
 
-    // Primero validar
+    // Validar body
     if (!req.body) {
       return res
         .status(400)
         .json({ error: "No se envió body en la solicitud" });
     }
 
-    // Luego extraer los datos
+    // Extraer los datos
     const {
       id_cliente,
       id_sede,
@@ -30,26 +30,8 @@ export const createServicioTecnico = async (req, res) => {
       fecha_garantia,
       numero_contacto_alternativo,
       autorizado,
+      metodos_pago = [], // métodos de pago opcionales
     } = req.body;
-
-    // Luego ya puedes usarlo
-    console.log({
-      id_cliente,
-      id_sede,
-      id_proveedor,
-      nombre_servicio,
-      descripcion_servicio,
-      fecha_servicio,
-      fecha_entrega,
-      tipo_dano,
-      clave_dispositivo,
-      costo,
-      abono,
-      garantia_aplica,
-      fecha_garantia,
-      numero_contacto_alternativo,
-      autorizado,
-    });
 
     // Validaciones básicas
     if (
@@ -65,17 +47,46 @@ export const createServicioTecnico = async (req, res) => {
       });
     }
 
+    // Validar métodos de pago si hay abono
+    const totalMetodos = metodos_pago.reduce(
+      (sum, mp) => sum + (mp.monto || 0),
+      0
+    );
+
+    if (abono > 0) {
+      if (metodos_pago.length === 0) {
+        return res.status(400).json({
+          error: "Debe registrar al menos un método de pago para el abono",
+        });
+      }
+
+      if (totalMetodos !== abono) {
+        return res.status(400).json({
+          error:
+            "La suma de los montos de métodos de pago no coincide con el valor del abono",
+        });
+      }
+
+      if (metodos_pago.length > 2) {
+        return res.status(400).json({
+          error: "Solo se permiten hasta dos métodos de pago",
+        });
+      }
+    }
+
     // Insertar factura
     const facturaResult = await client.query(
       `INSERT INTO FACTURA 
-      (fecha_factura, id_cliente_factura, total_factura, descuento_factura, iva_factura, subtotal_factura, aplicagarantia_factura, fechagarantia_factura, saldo_factura) 
-      VALUES (CURRENT_DATE, $1, $2, 0, 0, $2, $3, $4, $2) RETURNING id_factura`,
+        (fecha_factura, id_cliente_factura, total_factura, descuento_factura, iva_factura, subtotal_factura, aplicagarantia_factura, fechagarantia_factura, saldo_factura) 
+      VALUES 
+        (CURRENT_DATE, $1, $2, 0, 0, $2, $3, $4, $2) 
+      RETURNING id_factura`,
       [id_cliente, costo, garantia_aplica || false, fecha_garantia || null]
     );
 
     const idFactura = facturaResult.rows[0].id_factura;
 
-    // Determinar proveedor
+    // Determinar proveedor (por defecto PROV_TEMP_123 si no se envía)
     const proveedorFinal =
       id_proveedor && id_proveedor.trim() !== ""
         ? id_proveedor
@@ -84,16 +95,16 @@ export const createServicioTecnico = async (req, res) => {
     // Insertar servicio técnico
     const servicioTecnicoResult = await client.query(
       `INSERT INTO SERVICIOTECNICO 
-      (id_sede_serviciotecnico, id_proveedor_serviciotecnico, id_cliente_serviciotecnico, id_factura_serviciotecnico, 
-       nombre_serviciotecnico, descripcion_serviciotecnico, fecha_serviciotecnico, fecha_entrega_serviciotecnico, 
-       tipo_dano_serviciotecnico, clave_dispositivo_serviciotecnico, costo_serviciotecnico, abono_serviciotecnico, 
-       garantia_aplica_serviciotecnico, fecha_garantia_serviciotecnico, numero_contacto_alternativo_servicio, 
-       autorizado_serviciotecnico)
+        (id_sede_serviciotecnico, id_proveedor_serviciotecnico, id_cliente_serviciotecnico, id_factura_serviciotecnico, 
+         nombre_serviciotecnico, descripcion_serviciotecnico, fecha_serviciotecnico, fecha_entrega_serviciotecnico, 
+         tipo_dano_serviciotecnico, clave_dispositivo_serviciotecnico, costo_serviciotecnico, abono_serviciotecnico, 
+         garantia_aplica_serviciotecnico, fecha_garantia_serviciotecnico, numero_contacto_alternativo_servicio, 
+         autorizado_serviciotecnico)
       VALUES 
-      ($1, $2, $3, $4, 
-       $5, $6, $7, $8, 
-       $9, $10, $11, $12, 
-       $13, $14, $15, $16)
+        ($1, $2, $3, $4, 
+         $5, $6, $7, $8, 
+         $9, $10, $11, $12, 
+         $13, $14, $15, $16)
       RETURNING *`,
       [
         id_sede,
@@ -115,6 +126,18 @@ export const createServicioTecnico = async (req, res) => {
       ]
     );
 
+    // Insertar métodos de pago (si hay abono)
+    if (abono > 0 && metodos_pago.length > 0) {
+      for (const metodo of metodos_pago) {
+        await client.query(
+          `INSERT INTO METODOPAGO 
+            (id_factura_metodopago, id_tipometodopago_metodopago, monto_metodopago)
+          VALUES ($1, $2, $3)`,
+          [idFactura, metodo.id_tipo, metodo.monto]
+        );
+      }
+    }
+
     await client.query("COMMIT"); // Confirmar transacción
 
     res.status(201).json({
@@ -122,7 +145,7 @@ export const createServicioTecnico = async (req, res) => {
       servicioTecnico: servicioTecnicoResult.rows[0],
     });
   } catch (error) {
-    await client.query("ROLLBACK"); // Deshacer todo si algo falla
+    await client.query("ROLLBACK"); // Deshacer transacción si falla algo
     console.error("Error al crear servicio técnico:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   } finally {
@@ -130,7 +153,6 @@ export const createServicioTecnico = async (req, res) => {
   }
 };
 
-// Obtener todos los servicios técnicos activos con joins y cliente natural/jurídico
 export const getServiciosTecnicos = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -152,7 +174,9 @@ export const getServiciosTecnicos = async (req, res) => {
         fa.total_factura,
         fa.saldo_factura,
         fa.fecha_factura,
-        se.nombre_sede
+        se.nombre_sede,
+        -- Métodos de pago como array
+        COALESCE(mp.metodos_pago, '[]') AS metodos_pago
       FROM SERVICIOTECNICO st
       INNER JOIN CLIENTE cl ON cl.id_cliente = st.id_cliente_serviciotecnico
       LEFT JOIN CLIENTENATURAL cn ON cn.id_cliente = cl.id_cliente
@@ -160,6 +184,22 @@ export const getServiciosTecnicos = async (req, res) => {
       LEFT JOIN PROVEEDOR pr ON pr.id_proveedor = st.id_proveedor_serviciotecnico
       INNER JOIN FACTURA fa ON fa.id_factura = st.id_factura_serviciotecnico
       INNER JOIN SEDE se ON se.id_sede = st.id_sede_serviciotecnico
+      LEFT JOIN (
+        SELECT 
+          mp.id_factura_metodopago,
+          json_agg(
+            json_build_object(
+              'id_metodopago', mp.id_metodopago,
+              'id_tipo', mp.id_tipometodopago_metodopago,
+              'nombre_tipo', tp.nombre_tipometodopago,
+              'monto', mp.monto_metodopago,
+              'estado', mp.estado_metodopago
+            )
+          ) AS metodos_pago
+        FROM METODOPAGO mp
+        INNER JOIN TIPOMETODOPAGO tp ON tp.id_tipometodopago = mp.id_tipometodopago_metodopago
+        GROUP BY mp.id_factura_metodopago
+      ) mp ON mp.id_factura_metodopago = fa.id_factura
       WHERE st.estado_serviciotecnico = 'A'
       ORDER BY st.fecha_serviciotecnico DESC
     `);
