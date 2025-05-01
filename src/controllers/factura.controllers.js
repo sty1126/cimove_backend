@@ -14,12 +14,25 @@ export const createFactura = async (req, res) => {
     metodosPago = [], // 🔹 <- Agregado aquí
   } = req.body;
 
+  console.log("Datos recibidos:", req.body); // Imprime todo lo que llega en el body
+
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
     const fechaFactura = fecha || new Date();
+
+    console.log("Fecha de factura:", fechaFactura);
+    console.log("Cliente:", idCliente);
+    console.log("Total:", total);
+    console.log("Descuento:", descuento);
+    console.log("IVA:", iva);
+    console.log("Subtotal:", subtotal);
+    console.log("Aplicar Garantía:", aplicaGarantia);
+    console.log("Fecha Garantía:", fechaGarantia);
+    console.log("Saldo:", saldo);
+    console.log("Detalles:", detalles); // Imprime los detalles de la factura
 
     const resultFactura = await client.query(
       `INSERT INTO FACTURA (
@@ -43,9 +56,13 @@ export const createFactura = async (req, res) => {
 
     const idFactura = resultFactura.rows[0].id_factura;
 
+    console.log("ID de la factura registrada:", idFactura);
+
     // 🔸 Insertar detalles de la factura
     for (const item of detalles) {
       const { idProducto, cantidad, precioVenta, valorIVA, idSede } = item;
+
+      console.log(`Detalles del producto:`, item); // Imprime cada detalle
 
       if (!idSede) {
         throw new Error(`Falta idSede para el producto ${idProducto}`);
@@ -71,6 +88,8 @@ export const createFactura = async (req, res) => {
     // 🔹 Insertar métodos de pago
     for (const metodo of metodosPago) {
       const { idTipoMetodoPago, monto } = metodo;
+
+      console.log(`Método de pago:`, metodo); // Imprime cada método de pago
 
       if (!idTipoMetodoPago || monto == null) {
         throw new Error("Método de pago inválido");
