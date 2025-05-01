@@ -82,7 +82,7 @@ export const createFactura = async (req, res) => {
           ID_TIPOMETODOPAGO_METODOPAGO,
           MONTO_METODOPAGO,
           ESTADO_METODOPAGO
-        ) VALUES ($1, $2, $3, 'aplicado')`,
+        ) VALUES ($1, $2, $3)`,
         [idFactura, idTipoMetodoPago, monto]
       );
     }
