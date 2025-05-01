@@ -198,6 +198,7 @@ export const getEmpleadoPorId = async (req, res) => {
     res.status(500).json({ error: "Error al obtener empleado" });
   }
 };
+
 export const actualizarEmpleado = async (req, res) => {
   const id = req.params.id;
   const {
