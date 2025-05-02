@@ -119,6 +119,7 @@ export const crearFacturaPersonalizada = async (req, res) => {
   }
 };
 
+
 export const generarFacturaDesdeOrden = async (req, res) => {
   const client = await pool.connect();
   try {
