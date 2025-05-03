@@ -12,7 +12,7 @@ const router = express.Router();
 router.get("/", getFacturasProveedor);
 router.post("/", createFacturaProveedor);
 router.get("/facturas/orden/:id_ordencompra", getProductosOrdenParaFactura);
-router.post("/generar-desde-orden", generarFacturaDesdeOrden);
+router.post("/generar-desde-orden", generarFacturaDesdeOrden); 
 router.get("/:id", getFacturaProveedorById);
 
 
