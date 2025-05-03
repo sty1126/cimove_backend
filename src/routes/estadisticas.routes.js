@@ -17,7 +17,7 @@ import {
   getTotalFacturado,
   getTotalPagado,
   getIngresosPorMetodoPago,
-} from "../controllers/statisticsController.js"; // Asegúrate de tener el controlador correcto
+} from "../controllers/estadisticas.controllers.js"; // Asegúrate de tener el controlador correcto
 
 const router = express.Router();
 
