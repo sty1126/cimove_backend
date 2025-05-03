@@ -58,7 +58,7 @@ router.get("/ingresos/total", getTotalFacturado);
 router.get("/ingresos/reales", getTotalPagado);
 router.get("/ingresos/metodo-pago", getIngresosPorMetodoPago);
 router.get("/ingresos/sede", getVentasPorSede);
-router.get("/ingresos/sedeaño", getVentasPorSedePorAnio);
+router.get("/ingresos/sedeanio", getVentasPorSedePorAnio);
 router.get("/ingresos/sedemes", getVentasPorSedePorMes);
 router.get("/ingresos/sededia", getVentasPorSedePorDia);
 
