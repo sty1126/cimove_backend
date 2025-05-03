@@ -236,6 +236,10 @@ export const actualizarEmpleado = async (req, res) => {
       ]
     );
 
+    console.log("Actualizando salario con los siguientes valores:");
+    console.log("Monto salario:", monto_salario);
+    console.log("Tipo de pago:", tipopago_salario);
+    console.log("ID del empleado:", id);
     // Actualizar USUARIO (sin estado_usuario)
     await pool.query(
       `UPDATE USUARIO
