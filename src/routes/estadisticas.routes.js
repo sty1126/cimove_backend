@@ -17,6 +17,7 @@ import {
   getTotalFacturado,
   getTotalPagado,
   getIngresosPorMetodoPago,
+  getVentasPorSede,
 } from "../controllers/estadisticas.controllers.js"; // Asegúrate de tener el controlador correcto
 
 const router = express.Router();
@@ -49,5 +50,6 @@ router.get("/ingresos/ano", getIngresosPorAnio);
 router.get("/ingresos/total", getTotalFacturado);
 router.get("/ingresos/reales", getTotalPagado);
 router.get("/ingresos/metodo-pago", getIngresosPorMetodoPago);
+router.get("/ingresos/sede", getVentasPorSede);
 
 export default router;
