@@ -477,43 +477,62 @@ export const getNominaPorSedeYRol = async (req, res) => {
   }
 };
 
-// 7. Comparación ingresos vs egresos por mes
-export const getComparacionIngresosEgresosMensual = async (req, res) => {
+export const getVentasPorSedePorAnio = async (req, res) => {
   try {
     const result = await pool.query(`
-      WITH ingresos AS (
-        SELECT DATE_TRUNC('month', FECHA_FACTURA) AS mes, SUM(TOTAL_FACTURA) AS total_ingresos
-        FROM FACTURA
-        GROUP BY mes
-      ),
-      egresos AS (
-        SELECT DATE_TRUNC('month', FECHA_ABONOFACTURA) AS mes, SUM(MONTO_ABONOFACTURA) AS total_egresos
-        FROM ABONOFACTURA
-        GROUP BY mes
-        UNION ALL
-        SELECT DATE_TRUNC('month', FECHA_PAGOSALARIO), SUM(MONTO_PAGOSALARIO)
-        FROM PAGOSALARIO
-        GROUP BY 1
-        UNION ALL
-        SELECT DATE_TRUNC('month', FECHA_EGRESOGENERAL), SUM(MONTO_EGRESOGENERAL)
-        FROM EGRESOGENERAL
-        GROUP BY 1
-      )
       SELECT 
-        COALESCE(i.mes, e.mes) AS mes,
-        COALESCE(i.total_ingresos, 0) AS ingresos,
-        COALESCE(SUM(e.total_egresos), 0) AS egresos,
-        COALESCE(i.total_ingresos, 0) - COALESCE(SUM(e.total_egresos), 0) AS ganancia_neta
-      FROM ingresos i
-      FULL OUTER JOIN egresos e ON i.mes = e.mes
-      GROUP BY mes, ingresos
-      ORDER BY mes DESC
+        S.NOMBRE_SEDE,
+        EXTRACT(YEAR FROM F.FECHA_FACTURA) AS anio,
+        SUM(F.TOTAL_FACTURA) AS total_ventas
+      FROM FACTURA F
+      JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
+      WHERE F.FECHA_FACTURA >= NOW() - INTERVAL '3 years'
+      GROUP BY S.NOMBRE_SEDE, anio
+      ORDER BY anio DESC, total_ventas DESC
     `);
     res.json(result.rows);
   } catch (error) {
-    console.error("Error en getComparacionIngresosEgresosMensual:", error);
-    res
-      .status(500)
-      .json({ error: "Error al comparar ingresos y egresos mensuales" });
+    console.error("Error en getVentasPorSedePorAnio:", error);
+    res.status(500).json({ error: "Error al obtener ventas por sede por año" });
+  }
+};
+
+export const getVentasPorSedePorMes = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        S.NOMBRE_SEDE,
+        TO_CHAR(F.FECHA_FACTURA, 'YYYY-MM') AS mes,
+        SUM(F.TOTAL_FACTURA) AS total_ventas
+      FROM FACTURA F
+      JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
+      WHERE F.FECHA_FACTURA >= NOW() - INTERVAL '6 months'
+      GROUP BY S.NOMBRE_SEDE, mes
+      ORDER BY mes DESC, total_ventas DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error en getVentasPorSedePorMes:", error);
+    res.status(500).json({ error: "Error al obtener ventas por sede por mes" });
+  }
+};
+
+export const getVentasPorSedePorDia = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        S.NOMBRE_SEDE,
+        TO_CHAR(F.FECHA_FACTURA, 'YYYY-MM-DD') AS dia,
+        SUM(F.TOTAL_FACTURA) AS total_ventas
+      FROM FACTURA F
+      JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
+      WHERE F.FECHA_FACTURA >= NOW() - INTERVAL '10 days'
+      GROUP BY S.NOMBRE_SEDE, dia
+      ORDER BY dia DESC, total_ventas DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error en getVentasPorSedePorDia:", error);
+    res.status(500).json({ error: "Error al obtener ventas por sede por día" });
   }
 };
