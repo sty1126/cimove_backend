@@ -10,11 +10,10 @@ export const createFactura = async (req, res) => {
     aplicaGarantia,
     fechaGarantia,
     saldo,
-    detalles, // [{ idProducto, cantidad, precioVenta, valorIVA, idSede }]
-    metodosPago = [], // 🔹 <- Agregado aquí
+    idSede, // 🔹 Agregado a nivel general
+    detalles,
+    metodosPago = [],
   } = req.body;
-
-  console.log("Datos recibidos:", req.body); // Imprime todo lo que llega en el body
 
   const client = await pool.connect();
 
@@ -23,23 +22,14 @@ export const createFactura = async (req, res) => {
 
     const fechaFactura = fecha || new Date();
 
-    console.log("Fecha de factura:", fechaFactura);
-    console.log("Cliente:", idCliente);
-    console.log("Total:", total);
-    console.log("Descuento:", descuento);
-    console.log("IVA:", iva);
-    console.log("Subtotal:", subtotal);
-    console.log("Aplicar Garantía:", aplicaGarantia);
-    console.log("Fecha Garantía:", fechaGarantia);
-    console.log("Saldo:", saldo);
-    console.log("Detalles:", detalles); // Imprime los detalles de la factura
-
+    // 🔹 Insertar factura incluyendo sede
     const resultFactura = await client.query(
       `INSERT INTO FACTURA (
         FECHA_FACTURA, ID_CLIENTE_FACTURA, TOTAL_FACTURA,
         DESCUENTO_FACTURA, IVA_FACTURA, SUBTOTAL_FACTURA,
-        APLICAGARANTIA_FACTURA, FECHAGARANTIA_FACTURA, SALDO_FACTURA
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        APLICAGARANTIA_FACTURA, FECHAGARANTIA_FACTURA, SALDO_FACTURA,
+        ID_SEDE_FACTURA
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       RETURNING ID_FACTURA`,
       [
         fechaFactura,
@@ -51,18 +41,15 @@ export const createFactura = async (req, res) => {
         aplicaGarantia,
         fechaGarantia || null,
         saldo,
+        idSede || null, // Nuevo valor
       ]
     );
 
     const idFactura = resultFactura.rows[0].id_factura;
 
-    console.log("ID de la factura registrada:", idFactura);
-
-    // 🔸 Insertar detalles de la factura
+    // 🔸 Insertar detalles
     for (const item of detalles) {
       const { idProducto, cantidad, precioVenta, valorIVA, idSede } = item;
-
-      console.log(`Detalles del producto:`, item); // Imprime cada detalle
 
       if (!idSede) {
         throw new Error(`Falta idSede para el producto ${idProducto}`);
@@ -70,11 +57,14 @@ export const createFactura = async (req, res) => {
 
       await client.query(
         `INSERT INTO DETALLEFACTURA (
-          ID_FACTURA_DETALLEFACTURA, ID_PRODUCTO_DETALLEFACTURA,
-          CANTVENDIDA_DETALLEFACTURA, PRECIOVENTA_DETALLEFACTURA,
-          VALORIVA_DETALLEFACTURA
-        ) VALUES ($1,$2,$3,$4,$5)`,
-        [idFactura, idProducto, cantidad, precioVenta, valorIVA]
+          ID_FACTURA_DETALLEFACTURA,
+          ID_PRODUCTO_DETALLEFACTURA,
+          CANTVENDIDA_DETALLEFACTURA,
+          PRECIOVENTA_DETALLEFACTURA,
+          VALORIVA_DETALLEFACTURA,
+          ID_SEDE_DETALLEFACTURA -- 🔹 Asegúrate de tener esta columna
+        ) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [idFactura, idProducto, cantidad, precioVenta, valorIVA, idSede]
       );
 
       await client.query(
@@ -85,11 +75,9 @@ export const createFactura = async (req, res) => {
       );
     }
 
-    // 🔹 Insertar métodos de pago
+    // 🔹 Métodos de pago
     for (const metodo of metodosPago) {
       const { idTipoMetodoPago, monto } = metodo;
-
-      console.log(`Método de pago:`, metodo); // Imprime cada método de pago
 
       if (!idTipoMetodoPago || monto == null) {
         throw new Error("Método de pago inválido");
@@ -119,7 +107,6 @@ export const createFactura = async (req, res) => {
     client.release();
   }
 };
-
 export const getFacturas = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -143,7 +130,10 @@ export const getFacturas = async (req, res) => {
         df.ID_PRODUCTO_DETALLEFACTURA,
 
         p.ID_PRODUCTO,
-        p.NOMBRE_PRODUCTO
+        p.NOMBRE_PRODUCTO,
+
+        s.ID_SEDE,
+        s.NOMBRE_SEDE
 
       FROM FACTURA f
       LEFT JOIN CLIENTE c ON f.ID_CLIENTE_FACTURA = c.ID_CLIENTE
@@ -151,11 +141,12 @@ export const getFacturas = async (req, res) => {
       LEFT JOIN CLIENTEJURIDICO cj ON c.ID_CLIENTE = cj.ID_CLIENTE
       LEFT JOIN DETALLEFACTURA df ON f.ID_FACTURA = df.ID_FACTURA_DETALLEFACTURA
       LEFT JOIN PRODUCTO p ON df.ID_PRODUCTO_DETALLEFACTURA = p.ID_PRODUCTO
+      LEFT JOIN INVENTARIOLOCAL il ON df.ID_PRODUCTO_DETALLEFACTURA = il.ID_PRODUCTO_INVENTARIOLOCAL
+      LEFT JOIN SEDE s ON il.ID_SEDE_INVENTARIOLOCAL = s.ID_SEDE
       WHERE f.ESTADO_FACTURA = 'A'
         AND df.ID_DETALLEFACTURA IS NOT NULL;
     `);
 
-    // 🔹 Obtener los métodos de pago por separado
     const metodosPagoResult = await pool.query(`
       SELECT 
         mp.ID_FACTURA_METODOPAGO,
@@ -166,7 +157,6 @@ export const getFacturas = async (req, res) => {
       JOIN TIPOMETODOPAGO tmp ON mp.ID_TIPOMETODOPAGO_METODOPAGO = tmp.ID_TIPOMETODOPAGO;
     `);
 
-    // 🔹 Agrupar métodos de pago por factura
     const metodosPagoMap = new Map();
     for (const mp of metodosPagoResult.rows) {
       const idFactura = mp.id_factura_metodopago;
@@ -180,7 +170,6 @@ export const getFacturas = async (req, res) => {
       });
     }
 
-    // 🔹 Armar resultado final
     const facturasMap = new Map();
     for (const row of result.rows) {
       const idFactura = row.id_factura;
@@ -221,6 +210,12 @@ export const getFacturas = async (req, res) => {
             ? {
                 id_producto: row.id_producto,
                 nombre_producto: row.nombre_producto,
+              }
+            : null,
+          sede: row.id_sede
+            ? {
+                id_sede: row.id_sede,
+                nombre_sede: row.nombre_sede,
               }
             : null,
         });
