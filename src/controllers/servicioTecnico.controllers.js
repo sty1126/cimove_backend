@@ -178,7 +178,6 @@ export const getServiciosTecnicos = async (req, res) => {
   }
 };
 
-// Actualizar un servicio técnico existente
 // Actualizar un servicio técnico
 export const updateServicioTecnico = async (req, res) => {
   const client = await pool.connect();
