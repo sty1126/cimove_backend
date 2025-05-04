@@ -61,10 +61,9 @@ export const createFactura = async (req, res) => {
           ID_PRODUCTO_DETALLEFACTURA,
           CANTVENDIDA_DETALLEFACTURA,
           PRECIOVENTA_DETALLEFACTURA,
-          VALORIVA_DETALLEFACTURA,
-          ID_SEDE_DETALLEFACTURA -- 🔹 Asegúrate de tener esta columna
-        ) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [idFactura, idProducto, cantidad, precioVenta, valorIVA, idSede]
+          VALORIVA_DETALLEFACTURA
+        ) VALUES ($1,$2,$3,$4,$5)`,
+        [idFactura, idProducto, cantidad, precioVenta, valorIVA]
       );
 
       await client.query(
@@ -107,6 +106,7 @@ export const createFactura = async (req, res) => {
     client.release();
   }
 };
+
 export const getFacturas = async (req, res) => {
   try {
     const result = await pool.query(`
