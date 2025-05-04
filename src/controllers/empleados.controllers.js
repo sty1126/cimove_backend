@@ -27,11 +27,14 @@ export const getEmpleadosConUsuario = async (req, res) => {
     res.status(500).json({ error: "Error al obtener empleados" });
   }
 };
+
+import bcrypt from "bcryptjs";
+
 export const crearEmpleado = async (req, res) => {
   const client = await pool.connect();
   try {
     const {
-      id_empleado, // 👈 ahora viene desde el frontend
+      id_empleado,
       id_sede_empleado,
       id_tipodocumento_empleado,
       nombre_empleado,
@@ -82,9 +85,12 @@ export const crearEmpleado = async (req, res) => {
       ]
     );
 
-    // 2. Insertar en USUARIO (usamos la cédula como contraseña temporal)
+    // 2. Hashear la contraseña (se usa la cédula como contraseña temporal)
     const contrasena_temporal = String(id_empleado);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(contrasena_temporal, salt);
 
+    // 3. Insertar en USUARIO con la contraseña hasheada
     await client.query(
       `
       INSERT INTO USUARIO (
@@ -92,20 +98,21 @@ export const crearEmpleado = async (req, res) => {
         CONTRASENA_USUARIO,
         EMAIL_USUARIO,
         TELEFONO_USUARIO,
-        ID_TIPOUSUARIO_USUARIO
+        ID_TIPOUSUARIO_USUARIO,
+        ESTADO_USUARIO
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, 'A')
       `,
       [
         id_empleado,
-        contrasena_temporal,
+        hashedPassword,
         email_usuario,
         telefono_usuario,
         id_tipousuario_usuario,
       ]
     );
 
-    // 3. Insertar en SALARIO
+    // 4. Insertar en SALARIO
     await client.query(
       `
       INSERT INTO SALARIO (
@@ -122,7 +129,7 @@ export const crearEmpleado = async (req, res) => {
 
     res.status(201).json({
       message: "Empleado creado exitosamente",
-      contrasena: contrasena_temporal,
+      contrasena: contrasena_temporal, // Solo para información temporal
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -137,6 +144,7 @@ export const crearEmpleado = async (req, res) => {
     client.release();
   }
 };
+
 export const eliminarEmpleado = async (req, res) => {
   const { id } = req.params;
 
