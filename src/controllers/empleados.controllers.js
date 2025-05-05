@@ -159,6 +159,12 @@ export const eliminarEmpleado = async (req, res) => {
       [id]
     );
 
+    // Cambiar estado en SALARIO asociado
+    await pool.query(
+      `UPDATE SALARIO SET ESTADO_SALARIO = 'I' WHERE ID_EMPLEADO_SALARIO = $1`,
+      [id]
+    );
+
     res.status(200).json({
       message: "Empleado eliminado (estado lógico) correctamente",
     });
@@ -184,12 +190,18 @@ export const restaurarEmpleado = async (req, res) => {
       [id]
     );
 
+    // Cambiar estado en SALARIO asociado
+    await pool.query(
+      `UPDATE SALARIO SET ESTADO_SALARIO = 'A' WHERE ID_EMPLEADO_SALARIO = $1`,
+      [id]
+    );
+
     res.status(200).json({
-      message: "Empleado eliminado (estado lógico) correctamente",
+      message: "Empleado restaurado correctamente",
     });
   } catch (error) {
-    console.error("Error al eliminar empleado:", error);
-    res.status(500).json({ message: "Error al eliminar empleado" });
+    console.error("Error al restaurar empleado:", error);
+    res.status(500).json({ message: "Error al restaurar empleado" });
   }
 };
 
