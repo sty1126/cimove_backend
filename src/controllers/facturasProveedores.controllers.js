@@ -120,98 +120,72 @@ export const crearFacturaPersonalizada = async (req, res) => {
 };
 
 
-export const generarFacturaDesdeOrden = async (req, res) => {
+export async function generarFacturaDesdeOrden(req, res) {
+  const { id_ordencompra } = req.body;
+  console.log('🟡 ID de orden recibida:', id_ordencompra);
+
   const client = await pool.connect();
   try {
-    const { id_ordencompra } = req.body;
-    const fecha = new Date();
+    await client.query('BEGIN');
 
-    await client.query("BEGIN");
+    const { rows: productos } = await client.query(`
+      SELECT id_producto_detalleordencompra, cantidad_detalleordencompra, preciounitario_detalleordencompra
+      FROM detalleordencompra
+      WHERE id_ordencompra_detalleordencompra = $1
+    `, [id_ordencompra]);
 
-    // Obtener los detalles de la orden
-    const detalleRes = await client.query(
-      `SELECT id_producto_detalleordencompra, cantidad_detalleordencompra, preciounitario_detalleordencompra
-         FROM detalleordencompra
-         WHERE id_ordencompra_detalleordencompra = $1 AND estado_detalleordencompra = 'A'`,
-      [id_ordencompra]
-    );
+    console.log('🟢 Productos recuperados de BD:', productos);
 
-    const detalles = detalleRes.rows;
+    // Aquí puedes calcular el monto total si lo necesitas
+    const monto = productos.reduce((acc, p) => acc + p.cantidad_detalleordencompra * p.preciounitario_detalleordencompra, 0);
 
-    if (detalles.length === 0) {
-      throw new Error("La orden no tiene productos activos");
+    const { rows } = await client.query(`
+      INSERT INTO facturaproveedor (id_ordencompra_facturaproveedor, fecha_facturaproveedor, monto_facturaproveedor, estado_facturaproveedor)
+      VALUES ($1, CURRENT_DATE, $2, 'A')
+      RETURNING *
+    `, [id_ordencompra, monto]);
+
+    const factura = rows[0];
+
+    for (const p of productos) {
+      await client.query(`
+        INSERT INTO detallefacturaproveedor (id_factura_detallefacturaproveedor, id_producto_detallefacturaproveedor, cantidad_detallefacturaproveedor, preciounitario_detallefacturaproveedor)
+        VALUES ($1, $2, $3, $4)
+      `, [
+        factura.id_facturaproveedor,
+        p.id_producto_detalleordencompra,
+        p.cantidad_detalleordencompra,
+        p.preciounitario_detalleordencompra
+      ]);
     }
 
-    // Calcular el total de la factura
-    const total = detalles.reduce(
-      (acc, item) =>
-        acc +
-        item.cantidad_detalleordencompra *
-          item.preciounitario_detalleordencompra,
-      0
-    );
-
-    // Insertar la factura
-    const facturaRes = await client.query(
-      `INSERT INTO facturaproveedor (id_ordencompra_facturaproveedor, fecha_facturaproveedor, monto_facturaproveedor)
-         VALUES ($1, $2, $3)
-         RETURNING *`,
-      [id_ordencompra, fecha, total]
-    );
-
-    const factura = facturaRes.rows[0];
-
-    // Insertar el detalle de la factura
-    for (const d of detalles) {
-      const subtotal =
-        d.cantidad_detalleordencompra * d.preciounitario_detalleordencompra;
-      await client.query(
-        `INSERT INTO detallefacturaproveedor 
-           (id_facturaproveedor_detalle, id_producto_detalle, cantidad_detalle, preciounitario_detalle, subtotal_detalle)
-           VALUES ($1, $2, $3, $4, $5)`,
-        [
-          factura.id_facturaproveedor,
-          d.id_producto_detalleordencompra,
-          d.cantidad_detalleordencompra,
-          d.preciounitario_detalleordencompra,
-          subtotal,
-        ]
-      );
-    }
-
-    await client.query("COMMIT");
-
-    res.status(201).json({
-      mensaje: "Factura generada correctamente",
-      factura,
-    });
+    await client.query('COMMIT');
+    res.status(201).json({ factura });
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("Error al generar factura desde orden:", error);
-    res
-      .status(500)
-      .json({ error: "Error al generar la factura desde la orden" });
+    await client.query('ROLLBACK');
+    console.error('Error al generar factura:', error);
+    res.status(500).json({ error: 'Error al generar factura' });
   } finally {
     client.release();
   }
+  
 };
-  export const getFacturaProveedorById = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const result = await pool.query(
-        `SELECT * FROM facturaproveedor WHERE id_facturaproveedor = $1`,
-        [id]
-      );
-  
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Factura no encontrada" });
-      }
-  
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error("Error al obtener factura:", error);
-      res.status(500).json({ error: "Error al obtener factura" });
-    }
-};
-  
 
+export const getFacturaProveedorById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT * FROM facturaproveedor WHERE id_facturaproveedor = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Factura no encontrada" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al obtener la factura por ID:", error);
+    res.status(500).json({ error: "Error al obtener la factura" });
+  }
+};

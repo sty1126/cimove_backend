@@ -1,15 +1,15 @@
 import assert from "assert";
 import express from "express";
-import facturasRoutes from "../../routes/facturasProveedores.routes.js";
+import empleadosRoutes from "../../routes/empleados.routes.js";
 
-class FacturasProveedoresRoutesTest {
+class EmpleadosRoutesTest {
   constructor() {
     this.app = express();
     this.routes = [];
   }
 
   setupApp() {
-    this.app.use("/facturas", facturasRoutes); // 🔧 Usa el prefijo correcto
+    this.app.use("/", empleadosRoutes);
     this.routes = this.getRoutes(this.app);
   }
 
@@ -31,26 +31,30 @@ class FacturasProveedoresRoutesTest {
   }
 
   testRoutesStructure() {
-    console.log("🧪 Verificando rutas de facturas proveedores...");
+    console.log("🧪 Verificando rutas de empleados...");
 
     const expectedRoutes = [
       { path: "/", methods: ["get"] },
       { path: "/", methods: ["post"] },
-      { path: "/facturas/orden/:id_ordencompra", methods: ["get"] },
-      { path: "/generar-desde-orden", methods: ["post"] },
-      { path: "/:id", methods: ["get"] }, // También valida esta ruta final
+      { path: "/:id", methods: ["get"] },
+      { path: "/eliminar/:id", methods: ["put"] },
+      { path: "/:id", methods: ["put"] },
     ];
 
     expectedRoutes.forEach((expected) => {
-      const match = this.routes.find(
-        (r) =>
-          r.path === expected.path &&
-          expected.methods.every((m) => r.methods.includes(m))
+      const matchingRoutes = this.routes.filter((r) => r.path === expected.path);
+      const allMethods = matchingRoutes.flatMap((r) => r.methods);
+      const uniqueMethods = [...new Set(allMethods)];
+
+      const allExpectedMethodsPresent = expected.methods.every((m) =>
+        uniqueMethods.includes(m)
       );
+
       assert.ok(
-        match,
+        allExpectedMethodsPresent,
         `❌ Ruta ${expected.methods.join(",").toUpperCase()} ${expected.path} no está bien definida`
       );
+
       console.log(`✅ Ruta ${expected.methods.join(",").toUpperCase()} ${expected.path} OK`);
     });
   }
@@ -59,13 +63,12 @@ class FacturasProveedoresRoutesTest {
     try {
       this.setupApp();
       this.testRoutesStructure();
-      console.log("✅ Todas las pruebas de rutas de facturas proveedores pasaron correctamente.");
+      console.log("✅ Todas las pruebas de rutas de empleados pasaron correctamente.");
     } catch (error) {
-      console.error("❌ Error en pruebas de rutas de facturas proveedores:", error.message);
+      console.error("❌ Error en pruebas de rutas de empleados:", error.message);
     }
   }
 }
 
-const test = new FacturasProveedoresRoutesTest();
+const test = new EmpleadosRoutesTest();
 test.runAllTests();
-
