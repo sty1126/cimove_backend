@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import bcrypt from "bcryptjs";
 
 // Obtener todos los empleados con todos los datos de su usuario, sede y tipo de usuario
 export const getEmpleadosConUsuario = async (req, res) => {
@@ -18,7 +19,6 @@ export const getEmpleadosConUsuario = async (req, res) => {
       JOIN tipousuario t ON u.id_tipousuario_usuario = t.id_tipousuario
       JOIN sede s ON e.id_sede_empleado = s.id_sede
       LEFT JOIN salario sa ON e.id_empleado = sa.id_empleado_salario AND sa.estado_salario = 'A'
-      WHERE e.estado_empleado = 'A'
     `);
 
     res.json(result.rows);
@@ -27,8 +27,6 @@ export const getEmpleadosConUsuario = async (req, res) => {
     res.status(500).json({ error: "Error al obtener empleados" });
   }
 };
-
-import bcrypt from "bcryptjs";
 
 export const crearEmpleado = async (req, res) => {
   const client = await pool.connect();
