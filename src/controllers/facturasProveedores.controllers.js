@@ -1,23 +1,34 @@
 import { pool } from "../db.js";
-
 export const getFacturasProveedor = async (req, res) => {
   try {
     const result = await pool.query(`
-        SELECT 
-          f.id_facturaproveedor, 
-          f.fecha_facturaproveedor, 
-          f.monto_facturaproveedor,
-          COALESCE(SUM(a.monto_abonofactura), 0) AS total_abonado,
-          f.monto_facturaproveedor - COALESCE(SUM(a.monto_abonofactura), 0) AS saldo_pendiente,
-          p.nombre_proveedor,
-          f.estado_facturaproveedor
-        FROM facturaproveedor f
-        JOIN ordencompra oc ON f.id_ordencompra_facturaproveedor = oc.id_ordencompra
-        JOIN proveedor p ON oc.id_proveedor_ordencompra = p.id_proveedor
-        LEFT JOIN abonofactura a ON a.id_facturaproveedor_abonofactura = f.id_facturaproveedor
-        WHERE f.estado_facturaproveedor = 'A'
-        GROUP BY f.id_facturaproveedor, f.fecha_facturaproveedor, f.monto_facturaproveedor, p.nombre_proveedor
-      `);
+      SELECT 
+        f.id_facturaproveedor, 
+        f.fecha_facturaproveedor, 
+        f.monto_facturaproveedor,
+        COALESCE(SUM(a.monto_abonofactura), 0) AS total_abonado,
+        f.monto_facturaproveedor - COALESCE(SUM(a.monto_abonofactura), 0) AS saldo_pendiente,
+        p.nombre_proveedor,
+        f.estado_facturaproveedor,
+        json_agg(
+          json_build_object(
+            'id_detalle', d.id_detallefacturaproveedor,
+            'id_producto', d.id_producto_detalle,
+            'cantidad', d.cantidad_detalle,
+            'precio_unitario', d.preciounitario_detalle,
+            'subtotal', d.subtotal_detalle
+          )
+        ) FILTER (WHERE d.id_detallefacturaproveedor IS NOT NULL) AS detalles
+      FROM facturaproveedor f
+      JOIN ordencompra oc ON f.id_ordencompra_facturaproveedor = oc.id_ordencompra
+      JOIN proveedor p ON oc.id_proveedor_ordencompra = p.id_proveedor
+      LEFT JOIN abonofactura a ON a.id_facturaproveedor_abonofactura = f.id_facturaproveedor
+      LEFT JOIN detallefacturaproveedor d ON d.id_facturaproveedor_detalle = f.id_facturaproveedor
+      WHERE f.estado_facturaproveedor = 'A'
+      GROUP BY f.id_facturaproveedor, f.fecha_facturaproveedor, f.monto_facturaproveedor, p.nombre_proveedor, f.estado_facturaproveedor
+      ORDER BY f.id_facturaproveedor DESC
+    `);
+
     res.json(result.rows);
   } catch (error) {
     console.error("Error al obtener las facturas:", error);
