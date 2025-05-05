@@ -353,13 +353,15 @@ export const getTotalPagado = async (req, res) => {
 export const getIngresosPorMetodoPago = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT TMP.NOMBRE_TIPOMETODOPAGO AS metodo,
-             SUM(M.MONTO_METODOPAGO) AS total
-      FROM METODOPAGO M
-      JOIN TIPOMETODOPAGO TMP ON TMP.ID_TIPOMETODOPAGO = M.ID_TIPOMETODOPAGO_METODOPAGO
-      WHERE M.ESTADO_METODOPAGO = 'A'
-      GROUP BY metodo
-      ORDER BY total DESC
+        SELECT 
+    TMP.NOMBRE_TIPOMETODOPAGO AS metodo,
+    TMP.COMISION_TIPOMETODOPAGO AS comision,
+    SUM(M.MONTO_METODOPAGO) AS total
+  FROM METODOPAGO M
+  JOIN TIPOMETODOPAGO TMP ON TMP.ID_TIPOMETODOPAGO = M.ID_TIPOMETODOPAGO_METODOPAGO
+  WHERE M.ESTADO_METODOPAGO = 'A'
+  GROUP BY TMP.NOMBRE_TIPOMETODOPAGO, TMP.COMISION_TIPOMETODOPAGO
+  ORDER BY total DESC
     `);
     res.json(result.rows);
   } catch (error) {

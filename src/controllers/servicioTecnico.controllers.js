@@ -1,9 +1,9 @@
 import { pool } from "../db.js";
 // Crear un nuevo servicio técnico
 export const createServicioTecnico = async (req, res) => {
-  const client = await pool.connect(); // Para manejar transacción manualmente
+  const client = await pool.connect();
   try {
-    await client.query("BEGIN"); // Iniciar transacción
+    await client.query("BEGIN");
 
     if (!req.body) {
       return res
@@ -43,14 +43,20 @@ export const createServicioTecnico = async (req, res) => {
       });
     }
 
-    // Insertar factura
+    // Insertar factura con sede
     const facturaResult = await client.query(
       `INSERT INTO FACTURA 
-        (fecha_factura, id_cliente_factura, total_factura, descuento_factura, iva_factura, subtotal_factura, aplicagarantia_factura, fechagarantia_factura, saldo_factura) 
+        (fecha_factura, id_cliente_factura, total_factura, descuento_factura, iva_factura, subtotal_factura, aplicagarantia_factura, fechagarantia_factura, saldo_factura, id_sede_factura) 
       VALUES 
-        (CURRENT_DATE, $1, $2, 0, 0, $2, $3, $4, $2) 
+        (CURRENT_DATE, $1, $2, 0, 0, $2, $3, $4, $2, $5) 
       RETURNING id_factura`,
-      [id_cliente, costo, garantia_aplica || false, fecha_garantia || null]
+      [
+        id_cliente,
+        costo,
+        garantia_aplica || false,
+        fecha_garantia || null,
+        id_sede,
+      ]
     );
 
     const idFactura = facturaResult.rows[0].id_factura;
@@ -93,7 +99,7 @@ export const createServicioTecnico = async (req, res) => {
       ]
     );
 
-    // Insertar métodos de pago si hay abono y metodos enviados
+    // Insertar métodos de pago si hay abono
     for (const metodo of metodos_pago) {
       if (metodo?.id_tipo && metodo?.monto > 0) {
         await client.query(

@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import bcrypt from "bcryptjs";
 
 // Obtener todos los empleados con todos los datos de su usuario, sede y tipo de usuario
 export const getEmpleadosConUsuario = async (req, res) => {
@@ -18,7 +19,6 @@ export const getEmpleadosConUsuario = async (req, res) => {
       JOIN tipousuario t ON u.id_tipousuario_usuario = t.id_tipousuario
       JOIN sede s ON e.id_sede_empleado = s.id_sede
       LEFT JOIN salario sa ON e.id_empleado = sa.id_empleado_salario AND sa.estado_salario = 'A'
-      WHERE e.estado_empleado = 'A'
     `);
 
     res.json(result.rows);
@@ -27,8 +27,6 @@ export const getEmpleadosConUsuario = async (req, res) => {
     res.status(500).json({ error: "Error al obtener empleados" });
   }
 };
-
-import bcrypt from "bcryptjs";
 
 export const crearEmpleado = async (req, res) => {
   const client = await pool.connect();
@@ -161,12 +159,49 @@ export const eliminarEmpleado = async (req, res) => {
       [id]
     );
 
+    // Cambiar estado en SALARIO asociado
+    await pool.query(
+      `UPDATE SALARIO SET ESTADO_SALARIO = 'I' WHERE ID_EMPLEADO_SALARIO = $1`,
+      [id]
+    );
+
     res.status(200).json({
       message: "Empleado eliminado (estado lógico) correctamente",
     });
   } catch (error) {
     console.error("Error al eliminar empleado:", error);
     res.status(500).json({ message: "Error al eliminar empleado" });
+  }
+};
+
+export const restaurarEmpleado = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Cambiar estado en EMPLEADO
+    await pool.query(
+      `UPDATE EMPLEADO SET ESTADO_EMPLEADO = 'A' WHERE ID_EMPLEADO = $1`,
+      [id]
+    );
+
+    // Cambiar estado en USUARIO asociado
+    await pool.query(
+      `UPDATE USUARIO SET ESTADO_USUARIO = 'A' WHERE ID_EMPLEADO_USUARIO = $1`,
+      [id]
+    );
+
+    // Cambiar estado en SALARIO asociado
+    await pool.query(
+      `UPDATE SALARIO SET ESTADO_SALARIO = 'A' WHERE ID_EMPLEADO_SALARIO = $1`,
+      [id]
+    );
+
+    res.status(200).json({
+      message: "Empleado restaurado correctamente",
+    });
+  } catch (error) {
+    console.error("Error al restaurar empleado:", error);
+    res.status(500).json({ message: "Error al restaurar empleado" });
   }
 };
 
@@ -191,7 +226,7 @@ export const getEmpleadoPorId = async (req, res) => {
         JOIN tipousuario t ON u.id_tipousuario_usuario = t.id_tipousuario
         JOIN sede s ON e.id_sede_empleado = s.id_sede
         LEFT JOIN salario sa ON e.id_empleado = sa.id_empleado_salario AND sa.estado_salario = 'A'
-        WHERE e.id_empleado = $1 AND e.estado_empleado = 'A'
+        WHERE e.id_empleado = $1
       `,
       [id]
     );
