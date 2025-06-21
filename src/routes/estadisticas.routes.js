@@ -25,7 +25,7 @@ import {
   getVentasPorSedePorAnio,
   getVentasPorSedePorMes,
   getVentasPorSedePorDia,
-} from "../controllers/estadisticas.controllers.js"; // Asegúrate de tener el controlador correcto
+} from "../controllers/estadisticas.controllers.js";
 
 const router = express.Router();
 
