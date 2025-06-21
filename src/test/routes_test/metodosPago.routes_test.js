@@ -1,21 +1,15 @@
 import assert from "assert";
-import express from "express";
-import proveedorProductoRoutes from "../../routes/proveedorProducto.routes.js";
+import express, { Router } from "express";
+import router from "../../routes/metodosPago.routes.js"; 
 
-class ProveedorProductoRoutesTest {
+class MetodosPagoRoutesTest {
   constructor() {
     this.app = express();
     this.routes = [];
   }
 
   setupApp() {
-    // Necesario para parsear JSON si hay middlewares que lo requieran
-    this.app.use(express.json());
-
-    // Registrar rutas
-    this.app.use("/", proveedorProductoRoutes);
-
-    // Obtener rutas registradas
+    this.app.use("/", router);
     this.routes = this.getRoutes(this.app);
   }
 
@@ -37,13 +31,13 @@ class ProveedorProductoRoutesTest {
   }
 
   testRoutesStructure() {
-    console.log("🧪 Verificando rutas de proveedor-producto...");
+    console.log("🧪 Verificando rutas de métodos de pago...");
 
     const expectedRoutes = [
-      { path: "/", methods: ["get"] },                                 // getProveedoresByMultipleProductos
-      { path: "/:id_producto", methods: ["get"] },                     // getProveedoresByProducto
-      { path: "/", methods: ["post"] },                                // asociarProveedorAProducto
-      { path: "/:id_proveedorproducto", methods: ["put"] },         // desasociarProveedorDeProducto
+      { path: "/:idFactura", methods: ["post"] },
+      { path: "/", methods: ["get"] },
+      { path: "/factura/:idFactura", methods: ["get"] },
+      { path: "/:idMetodoPago", methods: ["put"] },
     ];
 
     expectedRoutes.forEach((expected) => {
@@ -64,12 +58,12 @@ class ProveedorProductoRoutesTest {
     try {
       this.setupApp();
       this.testRoutesStructure();
-      console.log("✅ Todas las pruebas de rutas de proveedor-producto pasaron correctamente.");
+      console.log("✅ Todas las pruebas de rutas de métodos de pago pasaron correctamente.");
     } catch (error) {
-      console.error("❌ Error en pruebas de rutas de proveedor-producto:", error.message);
+      console.error("❌ Error en pruebas de rutas de métodos de pago:", error.message);
     }
   }
 }
 
-const test = new ProveedorProductoRoutesTest();
+const test = new MetodosPagoRoutesTest();
 test.runAllTests();

@@ -1,21 +1,15 @@
 import assert from "assert";
 import express from "express";
-import proveedorProductoRoutes from "../../routes/proveedorProducto.routes.js";
+import router from "../../routes/tiposCliente.routes.js"; 
 
-class ProveedorProductoRoutesTest {
+class TiposClienteRoutesTest {
   constructor() {
     this.app = express();
     this.routes = [];
   }
 
   setupApp() {
-    // Necesario para parsear JSON si hay middlewares que lo requieran
-    this.app.use(express.json());
-
-    // Registrar rutas
-    this.app.use("/", proveedorProductoRoutes);
-
-    // Obtener rutas registradas
+    this.app.use("/", router);
     this.routes = this.getRoutes(this.app);
   }
 
@@ -37,13 +31,10 @@ class ProveedorProductoRoutesTest {
   }
 
   testRoutesStructure() {
-    console.log("🧪 Verificando rutas de proveedor-producto...");
+    console.log("🧪 Verificando rutas de tipos de cliente...");
 
     const expectedRoutes = [
-      { path: "/", methods: ["get"] },                                 // getProveedoresByMultipleProductos
-      { path: "/:id_producto", methods: ["get"] },                     // getProveedoresByProducto
-      { path: "/", methods: ["post"] },                                // asociarProveedorAProducto
-      { path: "/:id_proveedorproducto", methods: ["put"] },         // desasociarProveedorDeProducto
+      { path: "/", methods: ["get"] },
     ];
 
     expectedRoutes.forEach((expected) => {
@@ -64,12 +55,12 @@ class ProveedorProductoRoutesTest {
     try {
       this.setupApp();
       this.testRoutesStructure();
-      console.log("✅ Todas las pruebas de rutas de proveedor-producto pasaron correctamente.");
+      console.log("✅ Todas las pruebas de rutas de tipos de cliente pasaron correctamente.");
     } catch (error) {
-      console.error("❌ Error en pruebas de rutas de proveedor-producto:", error.message);
+      console.error("❌ Error en pruebas de rutas de tipos de cliente:", error.message);
     }
   }
 }
 
-const test = new ProveedorProductoRoutesTest();
+const test = new TiposClienteRoutesTest();
 test.runAllTests();
