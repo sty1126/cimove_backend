@@ -5,7 +5,7 @@ import {
   obtenerMetodosPagoPorFactura,
   obtenerTodosLosMetodosPago,
   anularMetodoPago,
-} from "../controllers/metodosPago.controllers.js";
+} from "./metodosPago.controllers.js";
 
 const router = Router();
 

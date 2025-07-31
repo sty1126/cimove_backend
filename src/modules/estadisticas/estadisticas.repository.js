@@ -1,4 +1,3 @@
-// estadisticas.repository.js
 import { pool } from "../../db.js";
 
 // Productos

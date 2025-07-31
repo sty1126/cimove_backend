@@ -1,4 +1,3 @@
-// metodosPago.controllers.js
 import * as mpService from "./metodosPago.service.js";
 
 export const agregarMetodosPago = async (req, res) => {
