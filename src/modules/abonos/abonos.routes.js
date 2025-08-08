@@ -5,7 +5,7 @@ import {
   getAbonosPorFacturaController,
   anularAbonoController,
   getTotalAbonadoPorFacturaController,
-} from "./abonos.controllers";
+} from "./abonos.controllers.js";
 
 const router = Router();
 
