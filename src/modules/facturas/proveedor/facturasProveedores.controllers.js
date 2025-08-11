@@ -1,4 +1,4 @@
-import * as service from "./facturaProveedor.service.js";
+import * as service from "./facturasProveedores.service.js";
 
 export const getFacturasProveedor = async (req, res) => {
   const data = await service.obtenerFacturas();

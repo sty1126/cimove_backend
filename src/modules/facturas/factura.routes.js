@@ -10,6 +10,6 @@ router.post("/", controller.createFacturaController);
 router.get("/", controller.getFacturasController);
 
 // Obtener una factura por su ID
-router.get("/:idFactura", getFacturaById);
+router.get("/:idFactura", controller.getFacturaByIdController);
 
 export default router;

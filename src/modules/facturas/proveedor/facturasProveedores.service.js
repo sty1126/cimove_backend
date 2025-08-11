@@ -1,4 +1,4 @@
-import * as repository from "./facturaProveedor.repository.js";
+import * as repository from "./facturasProveedores.repository.js";
 
 export const obtenerFacturas = () => repository.findAll();
 export const obtenerFacturaPorId = (id) => repository.findById(id);
