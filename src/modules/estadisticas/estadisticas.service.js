@@ -1,33 +1,147 @@
-import * as repo from "./estadisticas.repository.js";
+// estadisticas.service.js
+import * as estadisticasRepo from "./estadisticas.repository.js";
 
-export const getTopProductosPorCantidad = repo.obtenerTopProductosPorCantidad;
-export const getTopProductosPorValor = repo.obtenerTopProductosPorValor;
-export const getProductosMasFrecuentes = repo.obtenerProductosMasFrecuentes;
-export const getStockVsVentas = repo.obtenerStockVsVentas;
-export const getProductosBajoStockAltaDemanda = repo.obtenerProductosBajoStockAltaDemanda;
-export const getProductosObsoletos = repo.obtenerProductosObsoletos;
+// Servicios para estadísticas de productos
+export const getTopProductosPorCantidad = (limite = 10) => {
+  return estadisticasRepo.obtenerTopProductosPorCantidad(limite);
+};
 
-export const getTopClientesPorMonto = repo.obtenerTopClientesPorMonto;
-export const getTopClientesPorCantidad = repo.obtenerTopClientesPorCantidad;
-export const getTopClientesPorFrecuencia = repo.obtenerTopClientesPorFrecuencia;
-export const getClientesFrecuentesVsEsporadicos = repo.obtenerClientesFrecuentesVsEsporadicos;
-export const getClientesConPagosPendientes = repo.obtenerClientesConPagosPendientes;
+export const getTopProductosPorValor = (limite = 10) => {
+  return estadisticasRepo.obtenerTopProductosPorValor(limite);
+};
 
-export const getIngresosPorDia = repo.obtenerIngresosPorDia;
-export const getIngresosPorMes = repo.obtenerIngresosPorMes;
-export const getIngresosPorAnio = repo.obtenerIngresosPorAnio;
-export const getTotalFacturado = repo.obtenerTotalFacturado;
-export const getTotalPagado = repo.obtenerTotalPagado;
-export const getIngresosPorMetodoPago = repo.obtenerIngresosPorMetodoPago;
-export const getComparacionFacturadoRecibido = repo.obtenerComparacionFacturadoRecibido;
+export const getProductosFrecuentes = (limite = 10) => {
+  return estadisticasRepo.obtenerProductosFrecuentes(limite);
+};
 
-export const getVentasPorSede = repo.obtenerVentasPorSede;
-export const getVentasPorSedePorAnio = repo.obtenerVentasPorSedePorAnio;
-export const getVentasPorSedePorMes = repo.obtenerVentasPorSedePorMes;
-export const getVentasPorSedePorDia = repo.obtenerVentasPorSedePorDia;
+export const getStockVsVentas = (limite = 100) => {
+  return estadisticasRepo.obtenerStockVsVentas(limite);
+};
 
-export const getPagosProveedoresTotales = repo.obtenerPagosProveedoresTotales;
-export const getPagosPorProveedor = repo.obtenerPagosPorProveedor;
-export const getPagosProveedoresPorMes = repo.obtenerPagosProveedoresPorMes;
+export const getProductosObsoletos = (diasSinVenta = 90, limite = 20) => {
+  if (diasSinVenta < 0 || limite < 1) {
+    throw new Error("Parámetros inválidos para obtener productos obsoletos");
+  }
+  return estadisticasRepo.obtenerProductosObsoletos(diasSinVenta, limite);
+};
 
-export const getNominaPorSedeYRol = repo.obtenerNominaPorSedeYRol;
+// Servicios para estadísticas de clientes
+export const getTopClientesPorMonto = (limite = 10) => {
+  return estadisticasRepo.obtenerTopClientesPorMonto(limite);
+};
+
+export const getTopClientesPorCantidad = (limite = 10) => {
+  return estadisticasRepo.obtenerTopClientesPorCantidad(limite);
+};
+
+export const getTopClientesPorFrecuencia = (limite = 10, periodoMeses = 6) => {
+  if (periodoMeses < 1 || limite < 1) {
+    throw new Error("Parámetros inválidos para obtener clientes por frecuencia");
+  }
+  return estadisticasRepo.obtenerTopClientesPorFrecuencia(limite, periodoMeses);
+};
+
+export const getClientesFrecuentesVsEsporadicos = (limite = 50, periodoMeses = 3) => {
+  if (periodoMeses < 1 || limite < 1) {
+    throw new Error("Parámetros inválidos para clasificar clientes");
+  }
+  return estadisticasRepo.obtenerClientesFrecuentesVsEsporadicos(limite, periodoMeses);
+};
+
+export const getClientesConPagosPendientes = (limite = 20) => {
+  return estadisticasRepo.obtenerClientesConPagosPendientes(limite);
+};
+
+// Servicios para ingresos
+export const getIngresosTotales = async (fechaInicio, fechaFin) => {
+  return await estadisticasFinancierasRepo.obtenerIngresosTotales(fechaInicio, fechaFin);
+};
+
+export const getIngresosPorDia = async (fechaInicio, fechaFin) => {
+  if (!fechaInicio || !fechaFin) {
+    throw new Error("Se requieren fecha de inicio y fin para obtener ingresos por día");
+  }
+  return await estadisticasFinancierasRepo.obtenerIngresosPorDia(fechaInicio, fechaFin);
+};
+
+export const getIngresosPorMes = async (anio) => {
+  if (!anio) {
+    const currentYear = new Date().getFullYear();
+    anio = currentYear;
+  }
+  return await estadisticasFinancierasRepo.obtenerIngresosPorMes(anio);
+};
+
+export const getIngresosPorMetodoPago = async (fechaInicio, fechaFin) => {
+  return await estadisticasFinancierasRepo.obtenerIngresosPorMetodoPago(fechaInicio, fechaFin);
+};
+
+// Servicios para ventas por sede
+export const getVentasPorSede = async (fechaInicio, fechaFin) => {
+  return await estadisticasFinancierasRepo.obtenerVentasPorSede(fechaInicio, fechaFin);
+};
+
+export const getVentasPorSedePorMes = async (anio) => {
+  if (!anio) {
+    const currentYear = new Date().getFullYear();
+    anio = currentYear;
+  }
+  return await estadisticasFinancierasRepo.obtenerVentasPorSedePorMes(anio);
+};
+
+export const getVentasPorSedePorDia = async (fechaInicio, fechaFin) => {
+  if (!fechaInicio || !fechaFin) {
+    throw new Error("Se requieren fecha de inicio y fin para obtener ventas por sede y día");
+  }
+  return await estadisticasFinancierasRepo.obtenerVentasPorSedePorDia(fechaInicio, fechaFin);
+};
+
+// Servicios para proveedores
+export const getPagosProveedoresTotales = async (fechaInicio, fechaFin) => {
+  return await estadisticasFinancierasRepo.obtenerPagosProveedoresTotales(fechaInicio, fechaFin);
+};
+
+export const getPagosProveedoresPorMes = async (anio) => {
+  if (!anio) {
+    const currentYear = new Date().getFullYear();
+    anio = currentYear;
+  }
+  return await estadisticasFinancierasRepo.obtenerPagosProveedoresPorMes(anio);
+};
+
+// Servicio para nómina
+export const getNominaPorSedeYRol = async (fechaInicio, fechaFin) => {
+  return await estadisticasFinancierasRepo.obtenerNominaPorSedeYRol(fechaInicio, fechaFin);
+};
+
+// Servicio combinado para el dashboard financiero
+export const getDashboardFinanciero = async (anio) => {
+  if (!anio) {
+    const currentYear = new Date().getFullYear();
+    anio = currentYear;
+  }
+  
+  try {
+    const [
+      ingresosPorMes,
+      ventasPorSede,
+      pagosPorMes,
+      topClientes
+    ] = await Promise.all([
+      getIngresosPorMes(anio),
+      getVentasPorSede(),
+      getPagosProveedoresPorMes(anio),
+      getTopClientesPorMonto(5)
+    ]);
+    
+    return {
+      ingresosPorMes,
+      ventasPorSede,
+      pagosPorMes,
+      topClientes
+    };
+  } catch (error) {
+    console.error("Error al obtener datos del dashboard financiero:", error);
+    throw new Error("Error al obtener datos del dashboard financiero");
+  }
+};

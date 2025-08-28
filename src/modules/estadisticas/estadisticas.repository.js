@@ -1,364 +1,656 @@
 import { pool } from "../../db.js";
 
-// Productos
-export const obtenerTopProductosPorCantidad = async () => {
-  const result = await pool.query(`
+// ESTADÍSTICAS DE PRODUCTOS
+
+export const obtenerTopProductosPorCantidad = async (limite = 10) => {
+  const query = `
     SELECT 
-      P.nombre_producto, 
-      SUM(DF.CANTVENDIDA_DETALLEFACTURA) AS total_vendido
-    FROM DETALLEFACTURA DF
-    JOIN PRODUCTO P ON P.id_producto = DF.ID_PRODUCTO_DETALLEFACTURA
-    GROUP BY P.nombre_producto
-    ORDER BY total_vendido DESC
-    LIMIT 10
-  `);
+      p.id_producto,
+      p.nombre_producto,
+      COALESCE(SUM(df.cantvendida_detallefactura), 0) AS total_vendido
+    FROM 
+      producto p
+    LEFT JOIN 
+      detallefactura df ON p.id_producto = df.id_producto_detallefactura AND df.estado_detallefactura = 'A'
+    LEFT JOIN 
+      factura f ON df.id_factura_detallefactura = f.id_factura AND f.estado_factura = 'A'
+    WHERE 
+      p.estado_producto = 'A'
+    GROUP BY 
+      p.id_producto, p.nombre_producto
+    ORDER BY 
+      total_vendido DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-export const obtenerTopProductosPorValor = async () => {
-  const result = await pool.query(`
+export const obtenerTopProductosPorValor = async (limite = 10) => {
+  const query = `
     SELECT 
-      P.nombre_producto, 
-      SUM(DF.CANTVENDIDA_DETALLEFACTURA * DF.PRECIOVENTA_DETALLEFACTURA) AS total_valor
-    FROM DETALLEFACTURA DF
-    JOIN PRODUCTO P ON P.id_producto = DF.ID_PRODUCTO_DETALLEFACTURA
-    GROUP BY P.nombre_producto
-    ORDER BY total_valor DESC
-    LIMIT 10
-  `);
+      p.id_producto,
+      p.nombre_producto,
+      COALESCE(SUM(df.cantvendida_detallefactura * df.precioventa_detallefactura), 0) AS total_valor
+    FROM 
+      producto p
+    LEFT JOIN 
+      detallefactura df ON p.id_producto = df.id_producto_detallefactura AND df.estado_detallefactura = 'A'
+    LEFT JOIN 
+      factura f ON df.id_factura_detallefactura = f.id_factura AND f.estado_factura = 'A'
+    WHERE 
+      p.estado_producto = 'A'
+    GROUP BY 
+      p.id_producto, p.nombre_producto
+    ORDER BY 
+      total_valor DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-export const obtenerProductosMasFrecuentes = async () => {
-  const result = await pool.query(`
+export const obtenerProductosFrecuentes = async (limite = 10) => {
+  const query = `
     SELECT 
-      P.nombre_producto, 
-      COUNT(*) AS frecuencia_venta
-    FROM DETALLEFACTURA DF
-    JOIN PRODUCTO P ON P.id_producto = DF.ID_PRODUCTO_DETALLEFACTURA
-    GROUP BY P.nombre_producto
-    ORDER BY frecuencia_venta DESC
-    LIMIT 10
-  `);
+      p.id_producto,
+      p.nombre_producto,
+      COUNT(DISTINCT f.id_factura) AS frecuencia_compra
+    FROM 
+      producto p
+    INNER JOIN 
+      detallefactura df ON p.id_producto = df.id_producto_detallefactura AND df.estado_detallefactura = 'A'
+    INNER JOIN 
+      factura f ON df.id_factura_detallefactura = f.id_factura AND f.estado_factura = 'A'
+    WHERE 
+      p.estado_producto = 'A'
+    GROUP BY 
+      p.id_producto, p.nombre_producto
+    ORDER BY 
+      frecuencia_compra DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-export const obtenerStockVsVentas = async () => {
-  const result = await pool.query(`
+export const obtenerStockVsVentas = async (limite = 100) => {
+  const query = `
     SELECT 
-      P.nombre_producto,
-      IL.EXISTENCIA_INVENTARIOLOCAL AS stock_actual,
-      COALESCE(SUM(DF.CANTVENDIDA_DETALLEFACTURA), 0) AS total_vendido
-    FROM PRODUCTO P
-    LEFT JOIN DETALLEFACTURA DF ON P.id_producto = DF.ID_PRODUCTO_DETALLEFACTURA
-    LEFT JOIN INVENTARIOLOCAL IL ON P.id_producto = IL.ID_PRODUCTO_INVENTARIOLOCAL
-    GROUP BY P.nombre_producto, IL.EXISTENCIA_INVENTARIOLOCAL
-    ORDER BY total_vendido DESC
-  `);
+      p.id_producto,
+      p.nombre_producto,
+      COALESCE(SUM(il.existencia_inventariolocal), 0) AS stock_actual,
+      COALESCE(SUM(df.cantvendida_detallefactura), 0) AS total_vendido
+    FROM 
+      producto p
+    LEFT JOIN 
+      inventariolocal il ON p.id_producto = il.id_producto_inventariolocal AND il.estado_inventariolocal = 'A'
+    LEFT JOIN 
+      detallefactura df ON p.id_producto = df.id_producto_detallefactura AND df.estado_detallefactura = 'A'
+    LEFT JOIN 
+      factura f ON df.id_factura_detallefactura = f.id_factura AND f.estado_factura = 'A'
+    WHERE 
+      p.estado_producto = 'A'
+    GROUP BY 
+      p.id_producto, p.nombre_producto
+    ORDER BY 
+      p.nombre_producto
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-export const obtenerProductosBajoStockAltaDemanda = async () => {
-  const result = await pool.query(`
+export const obtenerProductosObsoletos = async (diasSinVenta = 90, limite = 20) => {
+  const fechaLimite = new Date();
+  fechaLimite.setDate(fechaLimite.getDate() - diasSinVenta);
+  
+  const query = `
     SELECT 
-      P.nombre_producto,
-      P.stock_producto,
-      COALESCE(SUM(DF.CANTVENDIDA_DETALLEFACTURA), 0) AS total_vendido
-    FROM PRODUCTO P
-    LEFT JOIN DETALLEFACTURA DF ON P.id_producto = DF.ID_PRODUCTO_DETALLEFACTURA
-    GROUP BY P.nombre_producto, P.stock_producto
-    HAVING P.stock_producto < 10 AND SUM(DF.CANTVENDIDA_DETALLEFACTURA) > 20
-    ORDER BY total_vendido DESC
-  `);
+      p.id_producto,
+      p.nombre_producto,
+      COALESCE(SUM(il.existencia_inventariolocal), 0) AS stock_actual,
+      COALESCE(MAX(f.fecha_factura), NULL) AS ultima_venta
+    FROM 
+      producto p
+    LEFT JOIN 
+      inventariolocal il ON p.id_producto = il.id_producto_inventariolocal AND il.estado_inventariolocal = 'A'
+    LEFT JOIN 
+      detallefactura df ON p.id_producto = df.id_producto_detallefactura AND df.estado_detallefactura = 'A'
+    LEFT JOIN 
+      factura f ON df.id_factura_detallefactura = f.id_factura AND f.estado_factura = 'A'
+    WHERE 
+      p.estado_producto = 'A'
+    GROUP BY 
+      p.id_producto, p.nombre_producto
+    HAVING 
+      MAX(f.fecha_factura) IS NULL OR MAX(f.fecha_factura) < $1
+    ORDER BY 
+      ultima_venta ASC NULLS FIRST, stock_actual DESC
+    LIMIT $2
+  `;
+  
+  const result = await pool.query(query, [fechaLimite, limite]);
   return result.rows;
 };
 
-export const obtenerProductosObsoletos = async () => {
-  const result = await pool.query(`
+// ESTADÍSTICAS DE CLIENTES
+
+export const obtenerTopClientesPorMonto = async (limite = 10) => {
+  const query = `
+    WITH cliente_info AS (
+      SELECT 
+        c.id_cliente,
+        CASE
+          WHEN cn.id_cliente IS NOT NULL THEN CONCAT(cn.nombre_cliente, ' ', cn.apellido_cliente)
+          WHEN cj.id_cliente IS NOT NULL THEN cj.razonsocial_cliente
+          ELSE 'Cliente ' || c.id_cliente
+        END AS nombre_cliente
+      FROM 
+        cliente c
+      LEFT JOIN 
+        clientenatural cn ON c.id_cliente = cn.id_cliente AND cn.estado_cliente = 'A'
+      LEFT JOIN 
+        clientejuridico cj ON c.id_cliente = cj.id_cliente AND cj.estado_cliente = 'A'
+      WHERE 
+        c.estado_cliente = 'A'
+    )
     SELECT 
-      P.nombre_producto,
-      COALESCE(SUM(DF.CANTVENDIDA_DETALLEFACTURA), 0) AS total_vendido
-    FROM PRODUCTO P
-    LEFT JOIN DETALLEFACTURA DF ON P.id_producto = DF.ID_PRODUCTO_DETALLEFACTURA
-    GROUP BY P.nombre_producto
-    ORDER BY total_vendido ASC
-    LIMIT 10
-  `);
+      ci.id_cliente,
+      ci.nombre_cliente,
+      COALESCE(SUM(f.total_factura), 0) AS total_compras
+    FROM 
+      cliente_info ci
+    LEFT JOIN 
+      factura f ON ci.id_cliente = f.id_cliente_factura AND f.estado_factura = 'A'
+    GROUP BY 
+      ci.id_cliente, ci.nombre_cliente
+    ORDER BY 
+      total_compras DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-// Clientes
-export const obtenerTopClientesPorMonto = async () => {
-  const result = await pool.query(`
+export const obtenerTopClientesPorCantidad = async (limite = 10) => {
+  const query = `
+    WITH cliente_info AS (
+      SELECT 
+        c.id_cliente,
+        CASE
+          WHEN cn.id_cliente IS NOT NULL THEN CONCAT(cn.nombre_cliente, ' ', cn.apellido_cliente)
+          WHEN cj.id_cliente IS NOT NULL THEN cj.razonsocial_cliente
+          ELSE 'Cliente ' || c.id_cliente
+        END AS nombre_cliente
+      FROM 
+        cliente c
+      LEFT JOIN 
+        clientenatural cn ON c.id_cliente = cn.id_cliente AND cn.estado_cliente = 'A'
+      LEFT JOIN 
+        clientejuridico cj ON c.id_cliente = cj.id_cliente AND cj.estado_cliente = 'A'
+      WHERE 
+        c.estado_cliente = 'A'
+    )
     SELECT 
-      COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE) AS nombre_cliente,
-      SUM(F.TOTAL_FACTURA) AS total_compras
-    FROM FACTURA F
-    JOIN CLIENTE C ON C.ID_CLIENTE = F.ID_CLIENTE_FACTURA
-    LEFT JOIN CLIENTENATURAL CN ON CN.ID_CLIENTE = C.ID_CLIENTE
-    LEFT JOIN CLIENTEJURIDICO CJ ON CJ.ID_CLIENTE = C.ID_CLIENTE
-    GROUP BY COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE)
-    ORDER BY total_compras DESC
-    LIMIT 10
-  `);
+      ci.id_cliente,
+      ci.nombre_cliente,
+      COUNT(f.id_factura) AS total_facturas
+    FROM 
+      cliente_info ci
+    LEFT JOIN 
+      factura f ON ci.id_cliente = f.id_cliente_factura AND f.estado_factura = 'A'
+    GROUP BY 
+      ci.id_cliente, ci.nombre_cliente
+    ORDER BY 
+      total_facturas DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-export const obtenerTopClientesPorCantidad = async () => {
-  const result = await pool.query(`
+export const obtenerTopClientesPorFrecuencia = async (limite = 10, periodoMeses = 6) => {
+  const fechaLimite = new Date();
+  fechaLimite.setMonth(fechaLimite.getMonth() - periodoMeses);
+  
+  const query = `
+    WITH cliente_info AS (
+      SELECT 
+        c.id_cliente,
+        CASE
+          WHEN cn.id_cliente IS NOT NULL THEN CONCAT(cn.nombre_cliente, ' ', cn.apellido_cliente)
+          WHEN cj.id_cliente IS NOT NULL THEN cj.razonsocial_cliente
+          ELSE 'Cliente ' || c.id_cliente
+        END AS nombre_cliente
+      FROM 
+        cliente c
+      LEFT JOIN 
+        clientenatural cn ON c.id_cliente = cn.id_cliente AND cn.estado_cliente = 'A'
+      LEFT JOIN 
+        clientejuridico cj ON c.id_cliente = cj.id_cliente AND cj.estado_cliente = 'A'
+      WHERE 
+        c.estado_cliente = 'A'
+    ),
+    cliente_compras AS (
+      SELECT 
+        ci.id_cliente,
+        ci.nombre_cliente,
+        COUNT(f.id_factura) AS total_facturas,
+        MAX(f.fecha_factura) AS ultima_compra,
+        MIN(f.fecha_factura) AS primera_compra
+      FROM 
+        cliente_info ci
+      INNER JOIN 
+        factura f ON ci.id_cliente = f.id_cliente_factura AND f.estado_factura = 'A'
+      WHERE 
+        f.fecha_factura >= $2
+      GROUP BY 
+        ci.id_cliente, ci.nombre_cliente
+      HAVING 
+        COUNT(f.id_factura) > 1
+    )
     SELECT 
-      COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE) AS nombre_cliente,
-      COUNT(*) AS cantidad_compras
-    FROM FACTURA F
-    JOIN CLIENTE C ON C.ID_CLIENTE = F.ID_CLIENTE_FACTURA
-    LEFT JOIN CLIENTENATURAL CN ON CN.ID_CLIENTE = C.ID_CLIENTE
-    LEFT JOIN CLIENTEJURIDICO CJ ON CJ.ID_CLIENTE = C.ID_CLIENTE
-    GROUP BY COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE)
-    ORDER BY cantidad_compras DESC
-    LIMIT 10
-  `);
-  return result.rows;
-};
-
-export const obtenerTopClientesPorFrecuencia = async () => {
-  const result = await pool.query(`
-    SELECT 
-      COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE) AS nombre_cliente,
-      COUNT(DISTINCT DATE(F.FECHA_FACTURA)) AS dias_con_compra
-    FROM FACTURA F
-    JOIN CLIENTE C ON C.ID_CLIENTE = F.ID_CLIENTE_FACTURA
-    LEFT JOIN CLIENTENATURAL CN ON CN.ID_CLIENTE = C.ID_CLIENTE
-    LEFT JOIN CLIENTEJURIDICO CJ ON CJ.ID_CLIENTE = C.ID_CLIENTE
-    GROUP BY COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE)
-    ORDER BY dias_con_compra DESC
-    LIMIT 10
-  `);
-  return result.rows;
-};
-
-export const obtenerClientesFrecuentesVsEsporadicos = async () => {
-  const result = await pool.query(`
-    SELECT 
-      COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE) AS nombre_cliente,
-      COUNT(DISTINCT DATE(F.FECHA_FACTURA)) AS dias_con_compra,
+      id_cliente,
+      nombre_cliente,
+      total_facturas,
+      ultima_compra,
+      primera_compra,
       CASE 
-        WHEN COUNT(DISTINCT DATE(F.FECHA_FACTURA)) > 3 THEN 'Frecuente'
+        WHEN (ultima_compra - primera_compra) = 0 THEN total_facturas
+        ELSE total_facturas::float / (EXTRACT(DAY FROM (ultima_compra - primera_compra)) / 30)
+      END AS frecuencia_mensual
+    FROM 
+      cliente_compras
+    ORDER BY 
+      frecuencia_mensual DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite, fechaLimite]);
+  return result.rows;
+};
+
+export const obtenerClientesFrecuentesVsEsporadicos = async (limite = 50, periodoMeses = 3) => {
+  const fechaLimite = new Date();
+  fechaLimite.setMonth(fechaLimite.getMonth() - periodoMeses);
+  
+  const query = `
+    WITH cliente_info AS (
+      SELECT 
+        c.id_cliente,
+        CASE
+          WHEN cn.id_cliente IS NOT NULL THEN CONCAT(cn.nombre_cliente, ' ', cn.apellido_cliente)
+          WHEN cj.id_cliente IS NOT NULL THEN cj.razonsocial_cliente
+          ELSE 'Cliente ' || c.id_cliente
+        END AS nombre_cliente
+      FROM 
+        cliente c
+      LEFT JOIN 
+        clientenatural cn ON c.id_cliente = cn.id_cliente AND cn.estado_cliente = 'A'
+      LEFT JOIN 
+        clientejuridico cj ON c.id_cliente = cj.id_cliente AND cj.estado_cliente = 'A'
+      WHERE 
+        c.estado_cliente = 'A'
+    ),
+    cliente_actividad AS (
+      SELECT 
+        ci.id_cliente,
+        ci.nombre_cliente,
+        COUNT(f.id_factura) AS total_compras,
+        MAX(f.fecha_factura) AS ultima_compra,
+        SUM(f.total_factura) AS total_gastado
+      FROM 
+        cliente_info ci
+      LEFT JOIN 
+        factura f ON ci.id_cliente = f.id_cliente_factura AND f.estado_factura = 'A'
+      GROUP BY 
+        ci.id_cliente, ci.nombre_cliente
+    )
+    SELECT 
+      id_cliente,
+      nombre_cliente,
+      total_compras,
+      ultima_compra,
+      total_gastado,
+      CASE 
+        WHEN ultima_compra >= $2 AND total_compras >= 3 THEN 'Frecuente'
+        WHEN ultima_compra >= $2 THEN 'Reciente'
+        WHEN ultima_compra < $2 AND total_compras >= 3 THEN 'Inactivo'
         ELSE 'Esporádico'
       END AS tipo_cliente
-    FROM FACTURA F
-    JOIN CLIENTE C ON C.ID_CLIENTE = F.ID_CLIENTE_FACTURA
-    LEFT JOIN CLIENTENATURAL CN ON CN.ID_CLIENTE = C.ID_CLIENTE
-    LEFT JOIN CLIENTEJURIDICO CJ ON CJ.ID_CLIENTE = C.ID_CLIENTE
-    GROUP BY COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE)
-    ORDER BY dias_con_compra DESC
-  `);
+    FROM 
+      cliente_actividad
+    ORDER BY 
+      CASE 
+        WHEN ultima_compra >= $2 THEN 0 
+        ELSE 1 
+      END,
+      total_compras DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite, fechaLimite]);
   return result.rows;
 };
 
-export const obtenerClientesConPagosPendientes = async () => {
-  const result = await pool.query(`
+export const obtenerClientesConPagosPendientes = async (limite = 20) => {
+  const query = `
+    WITH cliente_info AS (
+      SELECT 
+        c.id_cliente,
+        CASE
+          WHEN cn.id_cliente IS NOT NULL THEN CONCAT(cn.nombre_cliente, ' ', cn.apellido_cliente)
+          WHEN cj.id_cliente IS NOT NULL THEN cj.razonsocial_cliente
+          ELSE 'Cliente ' || c.id_cliente
+        END AS nombre_cliente
+      FROM 
+        cliente c
+      LEFT JOIN 
+        clientenatural cn ON c.id_cliente = cn.id_cliente AND cn.estado_cliente = 'A'
+      LEFT JOIN 
+        clientejuridico cj ON c.id_cliente = cj.id_cliente AND cj.estado_cliente = 'A'
+      WHERE 
+        c.estado_cliente = 'A'
+    )
     SELECT 
-      COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE) AS nombre_cliente,
-      COUNT(*) AS facturas_pendientes,
-      SUM(F.SALDO_FACTURA) AS total_pendiente
-    FROM FACTURA F
-    JOIN CLIENTE C ON C.ID_CLIENTE = F.ID_CLIENTE_FACTURA
-    LEFT JOIN CLIENTENATURAL CN ON CN.ID_CLIENTE = C.ID_CLIENTE
-    LEFT JOIN CLIENTEJURIDICO CJ ON CJ.ID_CLIENTE = C.ID_CLIENTE
-    WHERE F.SALDO_FACTURA > 0
-    GROUP BY COALESCE(CN.NOMBRE_CLIENTE || ' ' || CN.APELLIDO_CLIENTE, CJ.RAZONSOCIAL_CLIENTE)
-    ORDER BY total_pendiente DESC
-  `);
+      ci.id_cliente,
+      ci.nombre_cliente,
+      COUNT(f.id_factura) FILTER (WHERE f.saldo_factura > 0) AS facturas_pendientes,
+      SUM(f.saldo_factura) AS total_pendiente
+    FROM 
+      cliente_info ci
+    INNER JOIN 
+      factura f ON ci.id_cliente = f.id_cliente_factura AND f.estado_factura = 'A'
+        GROUP BY 
+      ci.id_cliente, ci.nombre_cliente
+    HAVING 
+      SUM(f.saldo_factura) > 0
+    ORDER BY 
+      total_pendiente DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limite]);
   return result.rows;
 };
 
-// Ingresos
-export const obtenerIngresosPorDia = async () => {
-  const result = await pool.query(`
+export const obtenerIngresosTotales = async (fechaInicio, fechaFin) => {
+  const query = `
     SELECT 
-      DATE(FECHA_FACTURA) AS fecha, 
-      SUM(TOTAL_FACTURA) AS total
-    FROM FACTURA
-    WHERE FECHA_FACTURA >= CURRENT_DATE - INTERVAL '20 days'
-    GROUP BY fecha
-    ORDER BY fecha DESC;
-  `);
-  return result.rows;
-};
+      COALESCE(SUM(f.total_factura), 0) as ingresos_totales,
+      COUNT(f.id_factura) as cantidad_facturas
+    FROM 
+      factura f
+    WHERE 
+      f.estado_factura = 'A'
+      ${fechaInicio ? `AND f.fecha_factura >= $1` : ''}
+      ${fechaFin ? `AND f.fecha_factura <= $2` : ''}
+  `;
 
-export const obtenerIngresosPorMes = async () => {
-  const result = await pool.query(`
-    SELECT 
-      DATE_TRUNC('month', FECHA_FACTURA) AS mes, 
-      SUM(TOTAL_FACTURA) AS total
-    FROM FACTURA
-    WHERE FECHA_FACTURA >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '6 months')
-    GROUP BY mes
-    ORDER BY mes DESC;
-  `);
-  return result.rows;
-};
+  const params = [];
+  if (fechaInicio) params.push(fechaInicio);
+  if (fechaFin) params.push(fechaFin);
 
-export const obtenerIngresosPorAnio = async () => {
-  const result = await pool.query(`
-    SELECT 
-      DATE_TRUNC('year', FECHA_FACTURA) AS año, 
-      SUM(TOTAL_FACTURA) AS total
-    FROM FACTURA
-    WHERE FECHA_FACTURA >= DATE_TRUNC('year', CURRENT_DATE - INTERVAL '5 years')
-    GROUP BY año
-    ORDER BY año DESC;
-  `);
-  return result.rows;
-};
-
-export const obtenerTotalFacturado = async () => {
-  const result = await pool.query(`
-    SELECT SUM(TOTAL_FACTURA) AS total_facturado FROM FACTURA
-  `);
+  const result = await pool.query(query, params);
   return result.rows[0];
 };
 
-export const obtenerTotalPagado = async () => {
-  const result = await pool.query(`
+export const obtenerIngresosPorDia = async (fechaInicio, fechaFin) => {
+  const query = `
     SELECT 
-      TMP.NOMBRE_TIPOMETODOPAGO AS metodo_pago,
-      SUM(M.MONTO_METODOPAGO) AS total_pagado
-    FROM METODOPAGO M
-    JOIN TIPOMETODOPAGO TMP ON TMP.ID_TIPOMETODOPAGO = M.ID_TIPOMETODOPAGO_METODOPAGO
-    WHERE M.ESTADO_METODOPAGO = 'A'
-    GROUP BY TMP.NOMBRE_TIPOMETODOPAGO
-    ORDER BY total_pagado DESC;
-  `);
-  return result.rows[0];
-};
+      f.fecha_factura as fecha,
+      COALESCE(SUM(f.total_factura), 0) as total_ingresos,
+      COUNT(f.id_factura) as cantidad_facturas
+    FROM 
+      factura f
+    WHERE 
+      f.estado_factura = 'A'
+      ${fechaInicio ? `AND f.fecha_factura >= $1` : ''}
+      ${fechaFin ? `AND f.fecha_factura <= $2` : ''}
+    GROUP BY 
+      f.fecha_factura
+    ORDER BY 
+      f.fecha_factura
+  `;
 
-export const obtenerIngresosPorMetodoPago = async () => {
-  const result = await pool.query(`
-    SELECT 
-      TMP.NOMBRE_TIPOMETODOPAGO AS metodo,
-      TMP.COMISION_TIPOMETODOPAGO AS comision,
-      SUM(M.MONTO_METODOPAGO) AS total
-    FROM METODOPAGO M
-    JOIN TIPOMETODOPAGO TMP ON TMP.ID_TIPOMETODOPAGO = M.ID_TIPOMETODOPAGO_METODOPAGO
-    WHERE M.ESTADO_METODOPAGO = 'A'
-    GROUP BY TMP.NOMBRE_TIPOMETODOPAGO, TMP.COMISION_TIPOMETODOPAGO
-    ORDER BY total DESC
-  `);
+  const params = [];
+  if (fechaInicio) params.push(fechaInicio);
+  if (fechaFin) params.push(fechaFin);
+
+  const result = await pool.query(query, params);
   return result.rows;
 };
 
-export const obtenerComparacionFacturadoRecibido = async () => {
-  const result = await pool.query(`
+export const obtenerIngresosPorMes = async (anio) => {
+  const query = `
     SELECT 
-      (SELECT SUM(TOTAL_FACTURA) FROM FACTURA) AS total_facturado,
-      (SELECT SUM(MONTO_METODOPAGO) FROM METODOPAGO WHERE ESTADO_METODOPAGO = 'A') AS total_recibido
-  `);
-  return result.rows[0];
-};
+      EXTRACT(MONTH FROM f.fecha_factura) as mes,
+      COALESCE(SUM(f.total_factura), 0) as total_ingresos,
+      COUNT(f.id_factura) as cantidad_facturas
+    FROM 
+      factura f
+    WHERE 
+      f.estado_factura = 'A'
+      AND EXTRACT(YEAR FROM f.fecha_factura) = $1
+    GROUP BY 
+      EXTRACT(MONTH FROM f.fecha_factura)
+    ORDER BY 
+      mes
+  `;
 
-//Sedes
-export const obtenerVentasPorSede = async () => {
-  const result = await pool.query(`
-    SELECT S.NOMBRE_SEDE, SUM(F.TOTAL_FACTURA) AS total_ventas
-    FROM FACTURA F
-    JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
-    GROUP BY S.NOMBRE_SEDE
-    ORDER BY total_ventas DESC
-  `);
+  const result = await pool.query(query, [anio]);
   return result.rows;
 };
 
-export const obtenerVentasPorSedePorAnio = async () => {
-  const result = await pool.query(`
+export const obtenerIngresosPorMetodoPago = async (fechaInicio, fechaFin) => {
+  const query = `
     SELECT 
-      S.NOMBRE_SEDE,
-      EXTRACT(YEAR FROM F.FECHA_FACTURA) AS anio,
-      SUM(F.TOTAL_FACTURA) AS total_ventas
-    FROM FACTURA F
-    JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
-    WHERE F.FECHA_FACTURA >= NOW() - INTERVAL '3 years'
-    GROUP BY S.NOMBRE_SEDE, anio
-    ORDER BY anio DESC, total_ventas DESC
-  `);
+      tmp.nombre_tipometodopago as metodo_pago,
+      COALESCE(SUM(mp.monto_metodopago), 0) as total_ingresos,
+      COUNT(mp.id_metodopago) as cantidad_pagos
+    FROM 
+      metodopago mp
+    JOIN 
+      tipometodopago tmp ON mp.id_tipometodopago_metodopago = tmp.id_tipometodopago
+    JOIN 
+      factura f ON mp.id_factura_metodopago = f.id_factura
+    WHERE 
+      mp.estado_metodopago = 'A' AND
+      f.estado_factura = 'A'
+      ${fechaInicio ? `AND f.fecha_factura >= $1` : ''}
+      ${fechaFin ? `AND f.fecha_factura <= $2` : ''}
+    GROUP BY 
+      tmp.nombre_tipometodopago
+    ORDER BY 
+      total_ingresos DESC
+  `;
+
+  const params = [];
+  if (fechaInicio) params.push(fechaInicio);
+  if (fechaFin) params.push(fechaFin);
+
+  const result = await pool.query(query, params);
   return result.rows;
 };
 
-export const obtenerVentasPorSedePorMes = async () => {
-  const result = await pool.query(`
+// Consultas de ventas por sede
+
+export const obtenerVentasPorSede = async (fechaInicio, fechaFin) => {
+  const query = `
     SELECT 
-      S.NOMBRE_SEDE,
-      TO_CHAR(F.FECHA_FACTURA, 'YYYY-MM') AS mes,
-      SUM(F.TOTAL_FACTURA) AS total_ventas
-    FROM FACTURA F
-    JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
-    WHERE F.FECHA_FACTURA >= NOW() - INTERVAL '6 months'
-    GROUP BY S.NOMBRE_SEDE, mes
-    ORDER BY mes DESC, total_ventas DESC
-  `);
+      s.id_sede,
+      s.nombre_sede,
+      COALESCE(SUM(f.total_factura), 0) as total_ventas,
+      COUNT(f.id_factura) as cantidad_facturas
+    FROM 
+      sede s
+    LEFT JOIN 
+      factura f ON s.id_sede = f.id_sede_factura AND f.estado_factura = 'A'
+      ${fechaInicio ? `AND f.fecha_factura >= $1` : ''}
+      ${fechaFin ? `AND f.fecha_factura <= $2` : ''}
+    WHERE 
+      s.estado_sede = 'A'
+    GROUP BY 
+      s.id_sede, s.nombre_sede
+    ORDER BY 
+      total_ventas DESC
+  `;
+
+  const params = [];
+  if (fechaInicio) params.push(fechaInicio);
+  if (fechaFin) params.push(fechaFin);
+
+  const result = await pool.query(query, params);
   return result.rows;
 };
 
-export const obtenerVentasPorSedePorDia = async () => {
-  const result = await pool.query(`
+export const obtenerVentasPorSedePorMes = async (anio) => {
+  const query = `
     SELECT 
-      S.NOMBRE_SEDE,
-      TO_CHAR(F.FECHA_FACTURA, 'YYYY-MM-DD') AS dia,
-      SUM(F.TOTAL_FACTURA) AS total_ventas
-    FROM FACTURA F
-    JOIN SEDE S ON S.ID_SEDE = F.ID_SEDE_FACTURA
-    WHERE F.FECHA_FACTURA >= NOW() - INTERVAL '10 days'
-    GROUP BY S.NOMBRE_SEDE, dia
-    ORDER BY dia DESC, total_ventas DESC
-  `);
+      s.id_sede,
+      s.nombre_sede,
+      EXTRACT(MONTH FROM f.fecha_factura) as mes,
+      COALESCE(SUM(f.total_factura), 0) as total_ventas,
+      COUNT(f.id_factura) as cantidad_facturas
+    FROM 
+      sede s
+    LEFT JOIN 
+      factura f ON s.id_sede = f.id_sede_factura AND f.estado_factura = 'A'
+      AND EXTRACT(YEAR FROM f.fecha_factura) = $1
+    WHERE 
+      s.estado_sede = 'A'
+    GROUP BY 
+      s.id_sede, s.nombre_sede, EXTRACT(MONTH FROM f.fecha_factura)
+    ORDER BY 
+      s.nombre_sede, mes
+  `;
+
+  const result = await pool.query(query, [anio]);
   return result.rows;
 };
 
-// Proveedores
-export const obtenerPagosProveedoresTotales = async () => {
-  const result = await pool.query(`
-    SELECT SUM(MONTO_ABONOFACTURA) AS total_pagado_proveedores
-    FROM ABONOFACTURA
-  `);
-  return result.rows[0];
-};
-
-export const obtenerPagosPorProveedor = async () => {
-  const result = await pool.query(`
-    SELECT P.NOMBRE_PROVEEDOR, SUM(A.MONTO_ABONOFACTURA) AS total_pagado
-    FROM ABONOFACTURA A
-    JOIN FACTURAPROVEEDOR FP ON FP.ID_FACTURAPROVEEDOR = A.ID_FACTURAPROVEEDOR_ABONOFACTURA
-    JOIN PROVEEDOR P ON P.ID_PROVEEDOR = FP.ID_PROVEEDOR_FACTURAPROVEEDOR
-    GROUP BY P.NOMBRE_PROVEEDOR
-    ORDER BY total_pagado DESC
-  `);
-  return result.rows;
-};
-
-export const obtenerPagosProveedoresPorMes = async () => {
-  const result = await pool.query(`
-    SELECT DATE_TRUNC('month', FECHA_ABONOFACTURA) AS mes, SUM(MONTO_ABONOFACTURA) AS total
-    FROM ABONOFACTURA
-    GROUP BY mes
-    ORDER BY mes DESC
-  `);
-  return result.rows;
-};
-
-// Nómina
-export const obtenerNominaPorSedeYRol = async () => {
-  const result = await pool.query(`
+export const obtenerVentasPorSedePorDia = async (fechaInicio, fechaFin) => {
+  const query = `
     SELECT 
-      S.NOMBRE_SEDE, 
-      TU.DESCRIPCION_TIPOUSUARIO AS rol, 
-      SUM(PS.MONTO_SALARIO) AS total
-    FROM SALARIO PS
-    JOIN EMPLEADO E ON E.ID_EMPLEADO = PS.ID_EMPLEADO_SALARIO
-    JOIN USUARIO U ON U.ID_EMPLEADO_USUARIO = E.ID_EMPLEADO
-    JOIN TIPOUSUARIO TU ON TU.ID_TIPOUSUARIO = U.ID_TIPOUSUARIO_USUARIO
-    JOIN SEDE S ON S.ID_SEDE = E.ID_SEDE_EMPLEADO
-    GROUP BY S.NOMBRE_SEDE, TU.DESCRIPCION_TIPOUSUARIO
-    ORDER BY total DESC;
-  `);
+      s.id_sede,
+      s.nombre_sede,
+      f.fecha_factura as fecha,
+      COALESCE(SUM(f.total_factura), 0) as total_ventas,
+      COUNT(f.id_factura) as cantidad_facturas
+    FROM 
+      sede s
+    LEFT JOIN 
+      factura f ON s.id_sede = f.id_sede_factura AND f.estado_factura = 'A'
+      ${fechaInicio ? `AND f.fecha_factura >= $1` : ''}
+      ${fechaFin ? `AND f.fecha_factura <= $2` : ''}
+    WHERE 
+      s.estado_sede = 'A'
+    GROUP BY 
+      s.id_sede, s.nombre_sede, f.fecha_factura
+    ORDER BY 
+      s.nombre_sede, fecha
+  `;
+
+  const params = [];
+  if (fechaInicio) params.push(fechaInicio);
+  if (fechaFin) params.push(fechaFin);
+
+  const result = await pool.query(query, params);
+  return result.rows;
+};
+
+// Consultas para proveedores
+
+export const obtenerPagosProveedoresTotales = async (fechaInicio, fechaFin) => {
+  const query = `
+    SELECT 
+      p.id_proveedor,
+      p.nombre_proveedor,
+      COALESCE(SUM(fp.monto_facturaproveedor), 0) as total_pagos,
+      COUNT(fp.id_facturaproveedor) as cantidad_facturas
+    FROM 
+      proveedor p
+    LEFT JOIN 
+      ordencompra oc ON p.id_proveedor = oc.id_proveedor_ordencompra AND oc.estado_facturaproveedor = 'A'
+    LEFT JOIN 
+      facturaproveedor fp ON oc.id_ordencompra = fp.id_ordencompra_facturaproveedor AND fp.estado_facturaproveedor = 'A'
+      ${fechaInicio ? `AND fp.fecha_facturaproveedor >= $1` : ''}
+      ${fechaFin ? `AND fp.fecha_facturaproveedor <= $2` : ''}
+    WHERE 
+      p.estado_proveedor = 'A'
+    GROUP BY 
+      p.id_proveedor, p.nombre_proveedor
+    ORDER BY 
+      total_pagos DESC
+  `;
+
+  const params = [];
+  if (fechaInicio) params.push(fechaInicio);
+  if (fechaFin) params.push(fechaFin);
+
+  const result = await pool.query(query, params);
+  return result.rows;
+};
+
+export const obtenerPagosProveedoresPorMes = async (anio) => {
+  const query = `
+    SELECT 
+      EXTRACT(MONTH FROM fp.fecha_facturaproveedor) as mes,
+      COALESCE(SUM(fp.monto_facturaproveedor), 0) as total_pagos,
+      COUNT(fp.id_facturaproveedor) as cantidad_facturas
+    FROM 
+      facturaproveedor fp
+    JOIN 
+      ordencompra oc ON fp.id_ordencompra_facturaproveedor = oc.id_ordencompra
+    WHERE 
+      fp.estado_facturaproveedor = 'A'
+      AND oc.estado_facturaproveedor = 'A'
+      AND EXTRACT(YEAR FROM fp.fecha_facturaproveedor) = $1
+    GROUP BY 
+      mes
+    ORDER BY 
+      mes
+  `;
+
+  const result = await pool.query(query, [anio]);
+  return result.rows;
+};
+
+// Consulta para nómina
+
+export const obtenerNominaPorSedeYRol = async (fechaInicio, fechaFin) => {
+  const query = `
+    SELECT 
+      s.id_sede,
+      s.nombre_sede,
+      e.cargo_empleado,
+      COUNT(e.id_empleado) as cantidad_empleados,
+      COALESCE(SUM(sa.monto_salario), 0) as total_nomina
+    FROM 
+      empleado e
+    JOIN 
+      sede s ON e.id_sede_empleado = s.id_sede
+    LEFT JOIN 
+      salario sa ON e.id_empleado = sa.id_empleado_salario AND sa.estado_salario = 'A'
+    WHERE 
+      e.estado_empleado = 'A'
+      AND s.estado_sede = 'A'
+    GROUP BY 
+      s.id_sede, s.nombre_sede, e.cargo_empleado
+    ORDER BY 
+      s.nombre_sede, total_nomina DESC
+  `;
+
+  // Nota: fechaInicio y fechaFin no se utilizan aquí porque la tabla SALARIO no tiene campo de fecha
+  // Para implementarlo correctamente, se necesitaría una tabla de histórico de salarios o pagos
+
+  const result = await pool.query(query);
   return result.rows;
 };

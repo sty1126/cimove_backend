@@ -88,7 +88,8 @@ export async function inactivarNotificacion(req, res) {
 export async function marcarNotificacionCompletada(req, res) {
   try {
     const { id } = req.params;
-    const actualizada = await repo.marcarNotificacionCompletada(id);
+    // Cambiado de marcarNotificacionCompletada a completarNotificacion
+    const actualizada = await repo.completarNotificacion(id);
     if (!actualizada)
       return res.status(404).json({ error: "Notificación no encontrada" });
     res.json({

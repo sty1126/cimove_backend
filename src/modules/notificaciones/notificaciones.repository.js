@@ -155,8 +155,8 @@ export async function inactivarNotificacion(id) {
   return result.rows[0];
 }
 
-// Marcar como completada
-export async function marcarNotificacionCompletada(id) {
+// Cambio de nombre: marcarNotificacionCompletada -> completarNotificacion
+export async function completarNotificacion(id) {
   const result = await pool.query(
     "UPDATE NOTIFICACION SET ESTADO_NOTIFICACION = 'C' WHERE ID_NOTIFICACION = $1 RETURNING *",
     [id]
@@ -164,8 +164,8 @@ export async function marcarNotificacionCompletada(id) {
   return result.rows[0];
 }
 
-// Restaurar como pendiente
-export async function restaurarNotificacionPendiente(id) {
+// Cambio de nombre: restaurarNotificacionPendiente -> restaurarNotificacion
+export async function restaurarNotificacion(id) {
   const result = await pool.query(
     "UPDATE NOTIFICACION SET ESTADO_NOTIFICACION = 'P' WHERE ID_NOTIFICACION = $1 RETURNING *",
     [id]
