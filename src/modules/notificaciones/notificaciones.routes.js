@@ -6,7 +6,7 @@ import {
   updateNotificacion,
   inactivarNotificacion,
   getNotificacionesCompletadas,
-  completarNotificacion,
+  marcarNotificacionCompletada,
   restaurarNotificacionPendiente,
 } from "./notificaciones.controllers.js";
 
@@ -14,7 +14,7 @@ const router = Router();
 
 // 2. Notificaciones completadas / estado
 router.get("/completadas", getNotificacionesCompletadas); // Obtener completadas
-router.put("/:id/completar", completarNotificacion); // Marcar como completada
+router.put("/:id/completar", marcarNotificacionCompletada); // Marcar como completada
 router.put("/:id/restaurar", restaurarNotificacionPendiente); // Restaurar pendiente
 
 // 1. Notificaciones generales

@@ -35,7 +35,7 @@ export const inactivarNotificacion = (req, res) =>
 // 2. Notificaciones completadas / estado
 export const getNotificacionesCompletadas = (req, res) =>
   repo
-    .fetchNotificacionesCompletadas()
+    .fetchNotificaciones({ estado: "C" }) // usando la función que ya existe
     .then((rows) => res.json(rows))
     .catch((err) => res.status(500).json({ error: err.message }));
 

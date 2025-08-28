@@ -13,11 +13,9 @@ export async function fetchBySede(sedeId) {
      WHERE i.id_sede_inventariolocal = $1`,
     [sedeId]
   );
-  if (res.rows.length === 0) {
-    throw new Error("No hay inventario en esta sede");
-  }
-  return res.rows;
+  return res.rows; // devuelve [], no lanza error
 }
+
 
 export async function insert(data) {
   const {

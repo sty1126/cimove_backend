@@ -14,9 +14,15 @@ export async function getInventarioLocalBySede(req, res) {
     const data = await repo.fetchBySede(req.params.sedeId);
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: 'Error al obtener inventario local por sede' });
+    if (err.message === "No hay inventario en esta sede") {
+      res.status(404).json({ message: err.message });
+    } else {
+      console.error(err);
+      res.status(500).json({ message: 'Error al obtener inventario local por sede' });
+    }
   }
 }
+
 
 export async function createInventarioLocal(req, res) {
   try {
