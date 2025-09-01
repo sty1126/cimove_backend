@@ -1,5 +1,5 @@
-// notificaciones.service.js
 import * as repo from "./notificaciones.repository.js";
+import { enviarCorreoNotificacion } from '../../utils/mailer.js';
 
 // 1. Notificaciones generales
 export const getNotificaciones = (req, res) =>
@@ -17,7 +17,14 @@ export const getNotificacionById = (req, res) =>
 export const createNotificacion = (req, res) =>
   repo
     .insertNotificacion(req.body)
-    .then((row) => res.json(row))
+    .then((row) => {
+      // Enviar email después de crear la notificación
+      enviarCorreoNotificacion(row)
+        .then(() => console.log("Correo enviado con éxito."))
+        .catch((err) => console.error("Error al enviar el correo:", err));
+
+      res.json(row);
+    })
     .catch((err) => res.status(500).json({ error: err.message }));
 
 export const updateNotificacion = (req, res) =>

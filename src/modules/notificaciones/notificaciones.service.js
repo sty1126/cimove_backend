@@ -1,4 +1,7 @@
 import * as repo from "./notificaciones.repository.js";
+//import { enviarCorreoNotificacion } from "../../utils/mailer.js";
+//import transporter  from "../../utils/mailer.js"; 
+
 
 // Listar todas las notificaciones activas o filtradas
 export async function getNotificaciones(req, res) {
