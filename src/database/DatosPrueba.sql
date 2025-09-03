@@ -585,7 +585,8 @@ VALUES
 INSERT INTO EMPLEADO (ID_EMPLEADO, ID_SEDE_EMPLEADO, ID_TIPODOCUMENTO_EMPLEADO, NOMBRE_EMPLEADO, TELEFONO_EMPLEADO, CARGO_EMPLEADO, EMAIL_EMPLEADO, ESTADO_EMPLEADO)
 VALUES
 (99, 1, 1, 'Administrador General', '3001234567', 'Administrador', 'admin@cimove.com', 'A'),
-(10, 1, 1, 'Vendedor Principal', '3007654321', 'Vendedor', 'vendedor@cimove.com', 'A');
+(10, 1, 1, 'Vendedor Principal', '3007654321', 'Vendedor', 'vendedor@cimove.com', 'A'),
+(13, 1, 1, 'Administrador correo', '3007654321', 'Administrador', 'kpershopcimove@gmail.com', 'A');
 
 INSERT INTO public.usuario (
     id_empleado_usuario,
@@ -596,7 +597,8 @@ INSERT INTO public.usuario (
     estado_usuario
 ) VALUES
 (99, '$2b$10$DQrUQprpfBzpLDwWndFsB.kToRiltDjcgqZev1n6UNVc.vOMWsjp6', 'admin@cimove.com', '3001234567', 1, 'A'),
-(10, '$2b$10$WecVFLYgkCNS1lRUEZmUBus3c1/qGc45kXDHe05gftCji7IrETWV6', 'vendedor@cimove.com', '3007654321', 2, 'A');
+(10, '$2b$10$WecVFLYgkCNS1lRUEZmUBus3c1/qGc45kXDHe05gftCji7IrETWV6', 'vendedor@cimove.com', '3007654321', 2, 'A'),
+(13, '$2a$10$9EiPY0g2CvTdFLK7g7YmBOG2HyGDoJ96080P6o1ExG3PkhOS66FdO', 'kpershopcimove@gmail.com', '3007654321', 1, 'A' );
 
 INSERT INTO SALARIO (
   ID_EMPLEADO_SALARIO,
