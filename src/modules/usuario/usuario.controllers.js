@@ -46,3 +46,24 @@ export const updatePasswordController = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+export const requestPasswordResetController = async (req, res) => {
+  try {
+    const { email_usuario } = req.body;
+    await service.requestPasswordReset(email_usuario);
+    res.json({ message: "Si el correo electrónico existe, se ha enviado un enlace de recuperación." });
+  } catch (error) {
+    console.error("Error en la solicitud de restablecimiento:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    await service.resetPasswordWithToken(req.body);
+    res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    console.error("Error al restablecer la contraseña:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+};

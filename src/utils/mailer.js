@@ -48,7 +48,7 @@ export async function enviarCorreoNotificacion(notificacion) {
 
   const info = await transporter.sendMail({
     from: '"Sistema de Notificaciones" <kpershopcimove@gmail.com>',
-    to: "marioandresperez1@gmail.com",
+    to: "kpershopcimove@gmail.com",
     subject: `Nueva notificación: ${titulo}`,
     text: `
       📢 Notificación del sistema
@@ -61,3 +61,23 @@ export async function enviarCorreoNotificacion(notificacion) {
   //console.log("✅ Correo enviado con éxito:", info.messageId);
   return info;
 }
+
+//const BASE_URL = "https://cimove-frontend.onrender.com";
+const BASE_URL = "http://localhost:3000"
+export const sendPasswordResetEmail = async (email, token) => {
+  const ResetPassword = `${BASE_URL}/reset-password?token=${token}`; //Si es para probar local no agregar otro /api
+
+  const mailOptions = {
+    from: '"Restablecer contraseña - CIMOVE" <kpershopcimove@gmail.com>',
+    to: 'refac47048@lespedia.com',
+    subject: 'Restablecimiento de Contraseña',
+    html: `
+      <h2>Restablecimiento de Contraseña</h2>
+      <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
+      <a href="${ResetPassword}">Restablecer Contraseña</a>
+      <p>Este enlace expirará en una hora.</p>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};

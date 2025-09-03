@@ -53,3 +53,35 @@ export const actualizarPassword = async (email, nuevaPasswordHasheada) => {
     [nuevaPasswordHasheada, email]
   );
 };
+
+//Para recuperar la contraseña
+export const savePasswordResetToken = async (userId, token, expiry) => {
+  await pool.query(
+    `INSERT INTO PASSWORDRESET (ID_EMPLEADO_USUARIO, TOKEN, TOKEN_EXPIRADO) VALUES ($1, $2, $3)`,
+    [userId, token, expiry]
+  );
+};
+
+export const findUserByToken = async (token) => {
+  const result = await pool.query(
+    `SELECT u.* FROM USUARIO u
+     INNER JOIN PASSWORDRESET prt ON u.ID_EMPLEADO_USUARIO = prt.ID_EMPLEADO_USUARIO
+     WHERE prt.TOKEN = $1 AND prt.TOKEN_EXPIRADO > NOW() AND u.ESTADO_USUARIO = 'A'`,
+    [token]
+  );
+  return result.rows[0];
+};
+
+export const updatePasswordByUserId = async (userId, newHashedPassword) => {
+  await pool.query(
+    `UPDATE USUARIO SET CONTRASENA_USUARIO = $1 WHERE ID_EMPLEADO_USUARIO = $2`,
+    [newHashedPassword, userId]
+  );
+};
+
+export const invalidateToken = async (token) => {
+  await pool.query(
+    `DELETE FROM PASSWORDRESET WHERE TOKEN = $1`,
+    [token]
+  );
+};
