@@ -1,42 +1,77 @@
-import {
-  generateClientesPDF,
-  generateProductosPDF,
-  generateIngresosPDF,
-  generateEgresosPDF,
-  generateGeneralPDF,
-} from "./reportes.service.js"
+import ReportesService from "./reportes.service.js";
 
-export const generateReport = async (req, res) => {
-  try {
-    const { type } = req.params
-    const params = req.body
+class ReportesController {
+  constructor() {
+    this.reportesService = new ReportesService();
+  }
 
-    let pdfBuffer
-    switch (type) {
-      case "clientes":
-        pdfBuffer = await generateClientesPDF(params)
-        break
-      case "productos":
-        pdfBuffer = await generateProductosPDF(params)
-        break
-      case "ingresos":
-        pdfBuffer = await generateIngresosPDF(params)
-        break
-      case "egresos":
-        pdfBuffer = await generateEgresosPDF(params)
-        break
-      case "general":
-        pdfBuffer = await generateGeneralPDF(params)
-        break
-      default:
-        return res.status(400).json({ error: "Tipo de reporte no válido" })
+  async generarReportePDF(req, res) {
+    try {
+      const { fechaInicio, fechaFin } = req.body;
+
+      if (!fechaInicio || !fechaFin) {
+        return res
+          .status(400)
+          .json({ error: "Las fechas de inicio y fin son requeridas" });
+      }
+
+      const fechaInicioDate = new Date(fechaInicio);
+      const fechaFinDate = new Date(fechaFin);
+
+      if (isNaN(fechaInicioDate.getTime()) || isNaN(fechaFinDate.getTime())) {
+        return res
+          .status(400)
+          .json({ error: "Formato de fecha inválido. Use YYYY-MM-DD" });
+      }
+
+      if (fechaInicioDate > fechaFinDate) {
+        return res.status(400).json({
+          error: "La fecha de inicio no puede ser mayor que la fecha de fin",
+        });
+      }
+
+      // Genera el PDF como buffer
+      const pdfBuffer = await this.reportesService.generateReportePDF(
+        fechaInicio,
+        fechaFin
+      );
+
+      const filename = `reporte_estadisticas_${fechaInicio}_${fechaFin}.pdf`;
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+      // Enviamos el buffer para descarga
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generando reporte PDF:", error);
+      res.status(500).json({
+        error: "Error interno del servidor al generar el reporte",
+        details: error.message,
+      });
     }
+  }
 
-    res.setHeader("Content-Type", "application/pdf")
-    res.setHeader("Content-Disposition", `attachment; filename=${type}-reporte.pdf`)
-    res.send(pdfBuffer)
-  } catch (error) {
-    console.error("Error generando reporte:", error)
-    res.status(500).json({ error: "Error generando el PDF" })
+  async obtenerEstadoReporte(req, res) {
+    try {
+      res.json({
+        status: "success",
+        message: "Servicio de reportes disponible",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error obteniendo estado del reporte:", error);
+      res.status(500).json({
+        error: "Error interno del servidor",
+        details: error.message,
+      });
+    }
   }
 }
+
+export default ReportesController;

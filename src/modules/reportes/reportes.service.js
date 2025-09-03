@@ -1,143 +1,337 @@
-import PdfPrinter from "pdfmake"
-import path from "path"
-import {
-  fetchProductosMasVendidos,
-  fetchProductosBajoStock,
-  fetchClientesActivos,
-  fetchMejoresClientes,
-  fetchTicketPromedioClientes,
-  fetchSegmentacionClientes,
-  fetchDashboardClientes,
-  fetchIngresos,
-  fetchEgresos,
-  fetchDashboardFinanzas,
-} from "./reportes.repository.js"
+import PdfPrinter from "pdfmake";
+import path from "path";
+import axios from "axios";
 
-// Definir fuentes virtuales (basadas en las estándar)
-const fonts = {
-  Roboto: {
-    normal: 'Helvetica',
-    bold: 'Helvetica-Bold',
-    italics: 'Helvetica-Oblique',
-    bolditalics: 'Helvetica-BoldOblique'
-  }
-};
+class ReportesService {
+  constructor() {
+    this.baseURL = "http://localhost:4000/api/estadisticas";
 
-const printer = new PdfPrinter(fonts)
+    // Fuentes pdfmake
+    this.fonts = {
+      Roboto: {
+        normal: "Helvetica",
+        bold: "Helvetica-Bold",
+        italics: "Helvetica-Oblique",
+        bolditalics: "Helvetica-BoldOblique",
+      },
+    };
 
-const createPdf = (docDefinition) =>
-  new Promise((resolve, reject) => {
-    const chunks = []
-    const doc = printer.createPdfKitDocument(docDefinition)
-    doc.on("data", (chunk) => chunks.push(chunk))
-    doc.on("end", () => resolve(Buffer.concat(chunks)))
-    doc.end()
-  })
-
-// ---------------- Reportes ----------------
-export const generateClientesPDF = async ({ fechaInicio, fechaFin, tipoPeriodo }) => {
-  const [activos, mejores, ticket, segmentacion, dashboard] = await Promise.all([
-    fetchClientesActivos(fechaInicio, fechaFin, tipoPeriodo),
-    fetchMejoresClientes(fechaInicio, fechaFin),
-    fetchTicketPromedioClientes(fechaInicio, fechaFin, tipoPeriodo),
-    fetchSegmentacionClientes(fechaInicio, fechaFin),
-    fetchDashboardClientes(fechaInicio, fechaFin, tipoPeriodo),
-  ])
-
-  const docDefinition = {
-    content: [
-      { text: "Reporte de Clientes", style: "header" },
-      { text: `Total Clientes: ${dashboard?.resumen?.totalClientes || 0}` },
-      { text: `Ticket Promedio: ${dashboard?.resumen?.ticketPromedioGeneral || 0}` },
-      { text: "\nMejores Clientes", style: "subheader" },
-      { ul: mejores.map((c) => `${c.nombre_cliente} - $${c.total_compras}`) },
-      { text: "\nSegmentación de Clientes", style: "subheader" },
-      { ul: segmentacion.map((s) => `${s.segmento_frecuencia} (${s.estado_actividad}) - ${s.cantidad_clientes}`) },
-    ],
-    styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
-    },
+    this.printer = new PdfPrinter(this.fonts);
   }
 
-  return createPdf(docDefinition)
+  formatCurrency(value) {
+    if (!value) return "$0";
+    return "$" + Number(value).toLocaleString("es-CO");
+  }
+
+  formatDate(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("es-CO");
+  }
+
+  async generateReportePDF(fechaInicio, fechaFin) {
+    try {
+      // ================= GENERAL =================
+      const rentabilidadResp = await axios.get(
+        `${this.baseURL}/generales/rentabilidad`,
+        { params: { fechaInicio, fechaFin } }
+      );
+      const evolucionResp = await axios.get(
+        `${this.baseURL}/generales/rentabilidad-evolucion`,
+        { params: { fechaInicio, fechaFin } }
+      );
+
+      const generalSection = [
+        { text: "GENERAL", style: "header" },
+        {
+          text: `Ingreso Total: ${this.formatCurrency(
+            rentabilidadResp.data.ingreso_total
+          )}`,
+        },
+        {
+          text: `Egreso Total: ${this.formatCurrency(
+            rentabilidadResp.data.egreso_total
+          )}`,
+        },
+        {
+          text: `Beneficio Neto: ${this.formatCurrency(
+            rentabilidadResp.data.beneficio_neto
+          )}`,
+        },
+        {
+          text: "Evolución de Rentabilidad",
+          style: "subheader",
+          margin: [0, 10, 0, 5],
+        },
+        {
+          table: {
+            widths: ["*", "*", "*"],
+            body: [
+              ["Fecha", "Ingreso", "Beneficio Neto"],
+              ...evolucionResp.data.map((r) => [
+                this.formatDate(r.fecha),
+                this.formatCurrency(r.ingreso_total),
+                this.formatCurrency(r.beneficio_neto),
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+      ];
+
+      // ================= PRODUCTOS =================
+      const bajoStockResp = await axios.get(
+        `${this.baseURL}/productos/bajo-stock`,
+        { params: { limite: 20 } }
+      );
+      const masVendidosResp = await axios.get(
+        `${this.baseURL}/productos/mas-vendidos`,
+        {
+          params: { fechaInicio, fechaFin, limite: 10, ordenarPor: "unidades" },
+        }
+      );
+
+      const productosSection = [
+        { text: "PRODUCTOS", style: "header", margin: [0, 20, 0, 5] },
+        { text: "Productos Bajo Stock", style: "subheader" },
+        {
+          table: {
+            widths: ["*", "*", "*", "*"],
+            body: [
+              ["ID", "Nombre", "Categoría", "Stock Actual"],
+              ...bajoStockResp.data.map((p) => [
+                p.id_producto,
+                p.nombre_producto,
+                p.categoria,
+                p.stock_actual,
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+        {
+          text: "Productos Más Vendidos",
+          style: "subheader",
+          margin: [0, 10, 0, 5],
+        },
+        {
+          table: {
+            widths: ["*", "*", "*", "*", "*"],
+            body: [
+              ["ID", "Nombre", "Categoría", "Unidades", "Total Ventas"],
+              ...masVendidosResp.data.map((p) => [
+                p.id_producto,
+                p.nombre_producto,
+                p.categoria,
+                p.total_unidades,
+                this.formatCurrency(p.total_ventas),
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+      ];
+
+      // ================= INGRESOS =================
+      const ventasDiaSemanaResp = await axios.get(
+        `${this.baseURL}/ingresos/ventas-dia-semana`,
+        { params: { fechaInicio, fechaFin } }
+      );
+      const ingresosCategoriaResp = await axios.get(
+        `${this.baseURL}/ingresos/ingresos-categoria`,
+        { params: { fechaInicio, fechaFin, limite: 10 } }
+      );
+
+      const ingresosSection = [
+        { text: "INGRESOS", style: "header", margin: [0, 20, 0, 5] },
+        { text: "Ventas por Día de la Semana", style: "subheader" },
+        {
+          table: {
+            widths: ["*", "*", "*", "*", "*", "*"],
+            body: [
+              [
+                "Día",
+                "Días con Ventas",
+                "Cantidad Facturas",
+                "Total Ventas",
+                "Promedio Diario",
+                "% Ventas",
+              ],
+              ...ventasDiaSemanaResp.data.map((r) => [
+                r.nombre_dia,
+                r.dias_con_ventas,
+                r.cantidad_facturas,
+                this.formatCurrency(r.total_ventas),
+                this.formatCurrency(r.promedio_ventas_diarias),
+                r.porcentaje_ventas + "%",
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+        {
+          text: "Ingresos por Categoría",
+          style: "subheader",
+          margin: [0, 10, 0, 5],
+        },
+        {
+          table: {
+            widths: ["*", "*", "*", "*"],
+            body: [
+              ["ID", "Categoría", "Ingreso Total", "%"],
+              ...ingresosCategoriaResp.data.map((r) => [
+                r.id_categoria,
+                r.categoria,
+                this.formatCurrency(r.ingreso_total),
+                r.porcentaje + "%",
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+      ];
+
+      // ================= EGRESOS =================
+      const egresosResp = await axios.get(`${this.baseURL}/egresos/egresos`, {
+        params: { fechaInicio, fechaFin },
+      });
+      const principalesEgresosResp = await axios.get(
+        `${this.baseURL}/egresos/principales-egresos`,
+        { params: { fechaInicio, fechaFin, limite: 10 } }
+      );
+
+      const egresosSection = [
+        { text: "EGRESOS", style: "header", margin: [0, 20, 0, 5] },
+        { text: "Egresos Totales", style: "subheader" },
+        {
+          table: {
+            widths: ["*", "*"],
+            body: [
+              ["Fecha", "Egreso Total"],
+              ...egresosResp.data.map((r) => [
+                this.formatDate(r.fecha),
+                this.formatCurrency(r.egreso_total),
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+        {
+          text: "Principales Egresos por Proveedor",
+          style: "subheader",
+          margin: [0, 10, 0, 5],
+        },
+        {
+          table: {
+            widths: ["*", "*", "*"],
+            body: [
+              ["ID Proveedor", "Nombre", "Total Egreso"],
+              ...principalesEgresosResp.data.map((r) => [
+                r.id_proveedor,
+                r.nombre_proveedor,
+                this.formatCurrency(r.egreso_total),
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+      ];
+
+      // ================= CLIENTES =================
+      const mejoresClientesResp = await axios.get(
+        `${this.baseURL}/clientes/mejores-clientes`,
+        { params: { fechaInicio, fechaFin, limite: 10 } }
+      );
+      const clientesPorSedeResp = await axios.get(
+        `${this.baseURL}/clientes/clientes-por-sede`,
+        { params: { fechaInicio, fechaFin } }
+      );
+
+      const clientesSection = [
+        { text: "CLIENTES", style: "header", margin: [0, 20, 0, 5] },
+        { text: "Mejores Clientes", style: "subheader" },
+        {
+          table: {
+            widths: ["*", "*", "*", "*", "*"],
+            body: [
+              ["ID", "Nombre", "Tipo", "Total Compras", "Cantidad Compras"],
+              ...mejoresClientesResp.data.map((r) => [
+                r.id_cliente,
+                r.nombre_cliente,
+                r.tipo_cliente,
+                this.formatCurrency(r.total_compras),
+                r.cantidad_compras,
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+        {
+          text: "Clientes por Sede",
+          style: "subheader",
+          margin: [0, 10, 0, 5],
+        },
+        {
+          table: {
+            widths: ["*", "*", "*", "*", "*"],
+            body: [
+              [
+                "Sede",
+                "ID Cliente",
+                "Nombre",
+                "Total Facturas",
+                "Total Ventas",
+              ],
+              ...clientesPorSedeResp.data.map((r) => [
+                r.nombre_sede,
+                r.id_cliente,
+                r.nombre_cliente,
+                r.total_facturas,
+                this.formatCurrency(r.total_ventas),
+              ]),
+            ],
+          },
+          layout: "lightHorizontalLines",
+        },
+      ];
+
+      // ================= PDF DEFINITIVO =================
+      const docDefinition = {
+        content: [
+          {
+            text: `Reporte de Estadísticas (${fechaInicio} - ${fechaFin})`,
+            style: "title",
+            margin: [0, 0, 0, 10],
+          },
+          ...generalSection,
+          ...productosSection,
+          ...ingresosSection,
+          ...egresosSection,
+          ...clientesSection,
+        ],
+        styles: {
+          title: { fontSize: 18, bold: true },
+          header: { fontSize: 16, bold: true },
+          subheader: { fontSize: 14, bold: true },
+        },
+        defaultStyle: { fontSize: 11, font: "Roboto" },
+      };
+
+      // Convertimos a PDF Buffer
+      const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
+      return new Promise((resolve, reject) => {
+        const chunks = [];
+        pdfDoc.on("data", (chunk) => chunks.push(chunk));
+        pdfDoc.on("end", () => resolve(Buffer.concat(chunks)));
+        pdfDoc.on("error", reject);
+        pdfDoc.end();
+      });
+    } catch (error) {
+      console.error("Error generando el PDF:", error);
+      throw error;
+    }
+  }
 }
 
-export const generateProductosPDF = async ({ fechaInicio, fechaFin, ordenarPor }) => {
-  const [masVendidos, bajoStock] = await Promise.all([
-    fetchProductosMasVendidos(fechaInicio, fechaFin, ordenarPor),
-    fetchProductosBajoStock(),
-  ])
-
-  const docDefinition = {
-    content: [
-      { text: "Reporte de Productos", style: "header" },
-      { text: "\nMás Vendidos", style: "subheader" },
-      { ul: masVendidos.map((p) => `${p.nombre_producto} - ${p.total_unidades} uds`) },
-      { text: "\nBajo Stock", style: "subheader" },
-      { ul: bajoStock.map((p) => `${p.nombre_producto} - Stock actual: ${p.stock_actual}`) },
-    ],
-    styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
-    },
-  }
-
-  return createPdf(docDefinition)
-}
-
-export const generateIngresosPDF = async ({ fechaInicio, fechaFin }) => {
-  const [ingresos, dashboard] = await Promise.all([
-    fetchIngresos(fechaInicio, fechaFin),
-    fetchDashboardFinanzas(fechaInicio, fechaFin),
-  ])
-
-  const docDefinition = {
-    content: [
-      { text: "Reporte de Ingresos", style: "header" },
-      { text: `Total: $${dashboard.totalIngresos}` },
-      { ul: ingresos.map((i) => `${i.fecha} - ${i.metodo_pago}: $${i.monto}`) },
-    ],
-  }
-
-  return createPdf(docDefinition)
-}
-
-export const generateEgresosPDF = async ({ fechaInicio, fechaFin }) => {
-  const [egresos, dashboard] = await Promise.all([
-    fetchEgresos(fechaInicio, fechaFin),
-    fetchDashboardFinanzas(fechaInicio, fechaFin),
-  ])
-
-  const docDefinition = {
-    content: [
-      { text: "Reporte de Egresos", style: "header" },
-      { text: `Total: $${dashboard.totalEgresos}` },
-      { ul: egresos.map((e) => `${e.fecha} - ${e.concepto}: $${e.monto}`) },
-    ],
-  }
-
-  return createPdf(docDefinition)
-}
-
-export const generateGeneralPDF = async ({ fechaInicio, fechaFin }) => {
-  const [ingresos, egresos, dashboard] = await Promise.all([
-    fetchIngresos(fechaInicio, fechaFin),
-    fetchEgresos(fechaInicio, fechaFin),
-    fetchDashboardFinanzas(fechaInicio, fechaFin),
-  ])
-
-  const docDefinition = {
-    content: [
-      { text: "Reporte General", style: "header" },
-      { text: `Ingresos: $${dashboard.totalIngresos}`, margin: [0, 0, 0, 5] },
-      { text: `Egresos: $${dashboard.totalEgresos}`, margin: [0, 0, 0, 10] },
-      { text: "\nDetalle Ingresos", style: "subheader" },
-      { ul: ingresos.map((i) => `${i.fecha} - ${i.metodo_pago}: $${i.monto}`) },
-      { text: "\nDetalle Egresos", style: "subheader" },
-      { ul: egresos.map((e) => `${e.fecha} - ${e.concepto}: $${e.monto}`) },
-    ],
-  }
-
-  return createPdf(docDefinition)
-}
+export default ReportesService;

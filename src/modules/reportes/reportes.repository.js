@@ -1,46 +1,201 @@
-import axios from "axios"
+import axios from "axios";
 
-const API_BASE = "http://localhost:4000/api/estadisticas"
+class ReportesRepository {
+  constructor() {
+    this.baseURL = "http://localhost:4000";
+  }
 
-// Productos
-export const fetchProductosMasVendidos = (fechaInicio, fechaFin, ordenarPor, limite = 10) =>
-  axios.get(`${API_BASE}/productos/mas-vendidos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&ordenarPor=${ordenarPor}&limite=${limite}`)
-    .then(res => res.data)
+  formatDateForAPI(date) {
+    if (!date) return null;
+    return new Date(date).toISOString().split("T")[0];
+  }
+  // ------------------- Generales -------------------
+  async getEstadisticasGenerales(fechaInicio, fechaFin) {
+    try {
+      const fechaInicioFormatted = this.formatDateForAPI(fechaInicio);
+      const fechaFinFormatted = this.formatDateForAPI(fechaFin);
 
-export const fetchProductosBajoStock = (limite = 20) =>
-  axios.get(`${API_BASE}/productos/bajo-stock?limite=${limite}`)
-    .then(res => res.data)
+      // Rentabilidad total
+      const rentabilidad = await axios.get(
+        `${this.baseURL}/api/estadisticas/generales/rentabilidad?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+      );
 
-// Clientes
-export const fetchClientesActivos = (fechaInicio, fechaFin, tipoPeriodo) =>
-  axios.get(`${API_BASE}/clientes/activos-por-periodo?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&tipoPeriodo=${tipoPeriodo}`)
-    .then(res => res.data)
+      // Evolución de rentabilidad por fecha
+      const rentabilidadEvolucion = await axios.get(
+        `${this.baseURL}/api/estadisticas/generales/rentabilidad-evolucion?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+      );
 
-export const fetchMejoresClientes = (fechaInicio, fechaFin, limite = 10) =>
-  axios.get(`${API_BASE}/clientes/mejores?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&limite=${limite}`)
-    .then(res => res.data)
+      return {
+        rentabilidad: rentabilidad.data,
+        rentabilidadEvolucion: rentabilidadEvolucion.data,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(
+        `Error obteniendo estadísticas generales: ${error.message}`
+      );
+    }
+  }
 
-export const fetchTicketPromedioClientes = (fechaInicio, fechaFin, tipoPeriodo) =>
-  axios.get(`${API_BASE}/clientes/ticket-promedio?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&tipoPeriodo=${tipoPeriodo}`)
-    .then(res => res.data)
+  // ------------------- Ingresos -------------------
+  async getEstadisticasIngresos(fechaInicio, fechaFin) {
+    try {
+      const fechaInicioFormatted = this.formatDateForAPI(fechaInicio);
+      const fechaFinFormatted = this.formatDateForAPI(fechaFin);
 
-export const fetchSegmentacionClientes = (fechaInicio, fechaFin) =>
-  axios.get(`${API_BASE}/clientes/segmentacion?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-    .then(res => res.data)
+      const [
+        ventasDiaSemana,
+        mapaCalor,
+        ingresosPeriodo,
+        ingresosCategoria,
+        ingresosSede,
+        metodoPago,
+        metodoPagoSede,
+      ] = await Promise.all([
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/ventas-dia-semana?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/mapa-calor?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/ingresos-periodo?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/ingresos-categoria?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}&limite=10`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/ventas-sede?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/ingresos-metodo-pago?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/ingresos/ingresos-metodo-pago-sede?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+      ]);
 
-export const fetchDashboardClientes = (fechaInicio, fechaFin, tipoPeriodo) =>
-  axios.get(`${API_BASE}/dashboard-clientes?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&tipoPeriodo=${tipoPeriodo}`)
-    .then(res => res.data)
+      return {
+        ventasDiaSemana: ventasDiaSemana.data,
+        mapaCalor: mapaCalor.data,
+        ingresosPeriodo: ingresosPeriodo.data,
+        ingresosCategoria: ingresosCategoria.data,
+        ingresosSede: ingresosSede.data,
+        metodoPago: metodoPago.data,
+        metodoPagoSede: metodoPagoSede.data,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(
+        `Error obteniendo estadísticas de ingresos: ${error.message}`
+      );
+    }
+  }
 
-// Finanzas
-export const fetchIngresos = (fechaInicio, fechaFin) =>
-  axios.get(`${API_BASE}/ingresos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-    .then(res => res.data)
+  // ------------------- Egresos -------------------
+  async getEstadisticasEgresos(fechaInicio, fechaFin) {
+    try {
+      const fechaInicioFormatted = this.formatDateForAPI(fechaInicio);
+      const fechaFinFormatted = this.formatDateForAPI(fechaFin);
 
-export const fetchEgresos = (fechaInicio, fechaFin) =>
-  axios.get(`${API_BASE}/egresos?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-    .then(res => res.data)
+      const [egresos, principalesEgresos] = await Promise.all([
+        axios.get(
+          `${this.baseURL}/api/estadisticas/egresos/egresos?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+        ),
+        axios.get(
+          `${this.baseURL}/api/estadisticas/egresos/principales-egresos?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}&limite=10`
+        ),
+      ]);
 
-export const fetchDashboardFinanzas = (fechaInicio, fechaFin) =>
-  axios.get(`${API_BASE}/dashboard-finanzas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
-    .then(res => res.data)
+      return {
+        egresos: egresos.data,
+        principalesEgresos: principalesEgresos.data,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(
+        `Error obteniendo estadísticas de egresos: ${error.message}`
+      );
+    }
+  }
+  // ------------------- Productos -------------------
+  async getEstadisticasProductos(
+    fechaInicio,
+    fechaFin,
+    limite = 10,
+    idProducto = null,
+    idSede = null
+  ) {
+    try {
+      const fechaInicioFormatted = this.formatDateForAPI(fechaInicio);
+      const fechaFinFormatted = this.formatDateForAPI(fechaFin);
+
+      // Llamadas a los endpoints
+      const bajoStock = await axios.get(
+        `${this.baseURL}/api/estadisticas/productos/bajo-stock?limite=20`
+      );
+
+      const historicoVentasProducto = idProducto
+        ? await axios.get(
+            `${this.baseURL}/api/estadisticas/productos/historico-ventas-producto?idProducto=${idProducto}&fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+          )
+        : { data: [] }; // si no hay idProducto, devolvemos array vacío
+
+      const masVendidos = await axios.get(
+        `${this.baseURL}/api/estadisticas/productos/mas-vendidos?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}&ordenarPor=unidades&limite=${limite}`
+      );
+
+      const masVendidosSede = idSede
+        ? await axios.get(
+            `${this.baseURL}/api/estadisticas/productos/mas-vendidos-sede?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}&idSede=${idSede}&limite=${limite}`
+          )
+        : { data: [] }; // si no hay idSede, devolvemos array vacío
+
+      return {
+        bajoStock: bajoStock.data,
+        historicoVentasProducto: historicoVentasProducto.data,
+        masVendidos: masVendidos.data,
+        masVendidosSede: masVendidosSede.data,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(
+        `Error obteniendo estadísticas de productos: ${error.message}`
+      );
+    }
+  }
+
+  // ------------------- Clientes -------------------
+  async getEstadisticasClientes(fechaInicio, fechaFin) {
+    try {
+      const fechaInicioFormatted = this.formatDateForAPI(fechaInicio);
+      const fechaFinFormatted = this.formatDateForAPI(fechaFin);
+
+      const [clientesActivos, mejoresClientes, clientesPorSede] =
+        await Promise.all([
+          axios.get(
+            `${this.baseURL}/api/estadisticas/clientes/clientes-activos?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}`
+          ),
+          axios.get(
+            `${this.baseURL}/api/estadisticas/clientes/mejores-clientes?fechaInicio=${fechaInicioFormatted}&fechaFin=${fechaFinFormatted}&limite=10`
+          ),
+          axios.get(
+            `${this.baseURL}/api/estadisticas/clientes/clientes-por-sede`
+          ),
+        ]);
+
+      return {
+        clientesActivos: clientesActivos.data,
+        mejoresClientes: mejoresClientes.data,
+        clientesPorSede: clientesPorSede.data,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new Error(
+        `Error obteniendo estadísticas de clientes: ${error.message}`
+      );
+    }
+  }
+}
+
+export default ReportesRepository;
