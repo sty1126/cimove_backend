@@ -37,6 +37,16 @@ export const deactivateSede = async (req, res) => {
   }
 };
 
+export const getSedeById = async (req, res) => {
+  try {
+    const sede = await SedesService.obtenerPorId(req.params.id_sede);
+    if (!sede) return res.status(404).json({ error: "Sede no encontrada" });
+    res.json(sede);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener la sede" });
+  }
+};
+
 export const getSedeByNombre = async (req, res) => {
   try {
     const sede = await SedesService.obtenerIdPorNombre(req.params.nombre_sede);

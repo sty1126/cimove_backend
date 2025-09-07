@@ -26,6 +26,18 @@ export const ProveedorProductoRepository = {
     );
   },
 
+  obtenerPorProveedor(id_proveedor) {
+  return pool.query(
+    `SELECT pr.id_producto, pr.nombre_producto
+     FROM PROVEEDORPRODUCTO pp
+     JOIN PRODUCTO pr ON pp.id_producto_proveedorproducto = pr.id_producto
+     WHERE pp.id_proveedor_proveedorproducto = $1
+       AND pp.estado_proveedorproducto = 'A'`,
+    [id_proveedor]
+  );
+  },
+
+
   asociarProveedorAProducto({ id_proveedor_proveedorproducto, id_producto_proveedorproducto }) {
     return pool.query(
       `INSERT INTO PROVEEDORPRODUCTO 

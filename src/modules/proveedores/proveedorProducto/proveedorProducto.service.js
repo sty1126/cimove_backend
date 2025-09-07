@@ -20,6 +20,11 @@ export const ProveedorProductoService = {
     return rows;
   },
 
+  async obtenerPorProveedor(id_proveedor) {
+  const { rows } = await ProveedorProductoRepository.obtenerPorProveedor(id_proveedor);
+  return rows;
+  },
+
   async asociarProveedor(data) {
     if (!data.id_proveedor_proveedorproducto || !data.id_producto_proveedorproducto) {
       throw new Error("Faltan datos requeridos");

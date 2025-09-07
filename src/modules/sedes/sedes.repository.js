@@ -25,6 +25,15 @@ export const SedesRepository = {
     );
   },
 
+  obtenerPorId(id_sede) {
+  return pool.query(
+    `SELECT id_sede, nombre_sede, id_ciudad_sede, direccion_sede, numeroempleados_sede, telefono_sede 
+     FROM SEDE 
+     WHERE id_sede = $1 AND estado_sede = 'A'`,
+    [id_sede]
+  );
+  },
+
   obtenerIdPorNombre(nombre_sede) {
     return pool.query(
       `SELECT id_sede FROM SEDE WHERE nombre_sede = $1 AND estado_sede = 'A'`,

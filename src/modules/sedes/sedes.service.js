@@ -16,6 +16,11 @@ export const SedesService = {
     return rowCount > 0;
   },
 
+  async obtenerPorId(id_sede) {
+  const { rows } = await SedesRepository.obtenerPorId(id_sede);
+  return rows[0] || null;
+  },
+
   async obtenerIdPorNombre(nombre_sede) {
     const { rows } = await SedesRepository.obtenerIdPorNombre(nombre_sede);
     return rows[0] || null;

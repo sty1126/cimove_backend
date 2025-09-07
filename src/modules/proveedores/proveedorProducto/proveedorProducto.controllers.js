@@ -20,6 +20,15 @@ export const getProveedoresByMultipleProductos = async (req, res) => {
   }
 };
 
+export const getProductosByProveedor = async (req, res) => {
+  try {
+    const data = await ProveedorProductoService.obtenerPorProveedor(req.params.id);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener productos del proveedor" });
+  }
+};
+
 //POST
 export const asociarProveedorAProducto = async (req, res) => {
   try {
@@ -40,3 +49,5 @@ export const desasociarProveedorDeProducto = async (req, res) => {
     res.status(500).json({ error: "Error al desasociar proveedor del producto" });
   }
 };
+
+
