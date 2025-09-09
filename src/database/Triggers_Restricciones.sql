@@ -70,3 +70,6 @@ CREATE TRIGGER trigger_actualizar_inventario
 AFTER INSERT OR UPDATE OR DELETE ON INVENTARIOLOCAL
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_inventario();
+
+
+

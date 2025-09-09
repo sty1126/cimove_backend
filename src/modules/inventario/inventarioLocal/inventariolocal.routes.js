@@ -5,7 +5,9 @@ import {
   createInventarioLocal,
   updateInventarioLocal,
   addStockToSede,
-  existeEnInventarioLocal
+  existeEnInventarioLocal,
+  getInventarioLocalEstado,
+  getInventarioLocalEstadoBySede,
 } from "./inventariolocal.controllers.js";
 
 const router = Router();
@@ -16,5 +18,7 @@ router.get("/existe/:idProducto/:idSede", existeEnInventarioLocal);
 router.post("/", createInventarioLocal);
 router.put("/:inventarioLocalId", updateInventarioLocal);
 router.patch("/:idProducto/:idSede/ajustar", addStockToSede);
+router.get("/estado", getInventarioLocalEstado);
+router.get("/estado/sede/:sedeId", getInventarioLocalEstadoBySede);
 
 export default router;

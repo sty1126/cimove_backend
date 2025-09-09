@@ -28,6 +28,7 @@ import usuarioRoutes from "./modules/usuario/usuario.routes.js";
 import estadisticasRoutes from "./modules/estadisticas/estadisticas.routes.js";
 import notificacionesRoutes from "./modules/notificaciones/notificaciones.routes.js";
 import reportesRoutes from "./modules/reportes/reportes.routes.js";
+import auditoriaRoutes from "./modules/auditoria/auditoria.routes.js";
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use("/api/usuario", usuarioRoutes);
 app.use("/api/estadisticas", estadisticasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
 app.use("/api/reportes", reportesRoutes);
+app.use("/api/auditoria", auditoriaRoutes);
 
 // Puerto
 const port = process.env.PORT || PORT;

@@ -16,7 +16,6 @@ export async function fetchBySede(sedeId) {
   return res.rows; // devuelve [], no lanza error
 }
 
-
 export async function insert(data) {
   const {
     id_producto_inventariolocal,
@@ -33,7 +32,7 @@ export async function insert(data) {
     existencia_inventariolocal === undefined ||
     stockmaximo_inventariolocal === undefined
   ) {
-    throw { status: 400, message: 'Faltan campos obligatorios' };
+    throw { status: 400, message: "Faltan campos obligatorios" };
   }
 
   const existe = await pool.query(
@@ -41,7 +40,7 @@ export async function insert(data) {
     [id_producto_inventariolocal, id_sede_inventariolocal]
   );
   if (existe.rows.length > 0) {
-    throw { status: 409, message: 'Producto ya registrado en esta sede' };
+    throw { status: 409, message: "Producto ya registrado en esta sede" };
   }
 
   const res = await pool.query(
@@ -59,7 +58,7 @@ export async function insert(data) {
       existencia_inventariolocal,
       stockminimo_inventariolocal || null,
       stockmaximo_inventariolocal,
-      estado_inventariolocal || 'A',
+      estado_inventariolocal || "A",
     ]
   );
 
@@ -68,18 +67,25 @@ export async function insert(data) {
 
 export async function update(id, data) {
   const actual = await pool.query(
-    `SELECT * FROM inventariolocal WHERE id_inventariolocal = $1`, [id]
+    `SELECT * FROM inventariolocal WHERE id_inventariolocal = $1`,
+    [id]
   );
-  if (actual.rowCount === 0) throw new Error('Inventario local no encontrado');
+  if (actual.rowCount === 0) throw new Error("Inventario local no encontrado");
 
   const anterior = actual.rows[0];
   const campos = {
-    id_producto_inventariolocal: data.id_producto_inventariolocal ?? anterior.id_producto_inventariolocal,
-    id_sede_inventariolocal: data.id_sede_inventariolocal ?? anterior.id_sede_inventariolocal,
-    existencia_inventariolocal: data.existencia_inventariolocal ?? anterior.existencia_inventariolocal,
-    stockminimo_inventariolocal: data.stockminimo_inventariolocal ?? anterior.stockminimo_inventariolocal,
-    stockmaximo_inventariolocal: data.stockmaximo_inventariolocal ?? anterior.stockmaximo_inventariolocal,
-    estado_inventariolocal: data.estado_inventariolocal ?? anterior.estado_inventariolocal,
+    id_producto_inventariolocal:
+      data.id_producto_inventariolocal ?? anterior.id_producto_inventariolocal,
+    id_sede_inventariolocal:
+      data.id_sede_inventariolocal ?? anterior.id_sede_inventariolocal,
+    existencia_inventariolocal:
+      data.existencia_inventariolocal ?? anterior.existencia_inventariolocal,
+    stockminimo_inventariolocal:
+      data.stockminimo_inventariolocal ?? anterior.stockminimo_inventariolocal,
+    stockmaximo_inventariolocal:
+      data.stockmaximo_inventariolocal ?? anterior.stockmaximo_inventariolocal,
+    estado_inventariolocal:
+      data.estado_inventariolocal ?? anterior.estado_inventariolocal,
   };
 
   const res = await pool.query(
@@ -157,4 +163,194 @@ export async function exists(idProducto, idSede) {
   return res.rows.length > 0
     ? { existe: true, inventarioLocalId: res.rows[0].id_inventariolocal }
     : { existe: false };
+}
+// Traer todos los productos con estado (garantía, reparación, etc.)
+export async function fetchAllEstados() {
+  const res = await pool.query(`
+    SELECT e.id,
+           e.estado,
+           e.cantidad,
+
+           -- Producto
+           p.id_producto,
+           p.nombre_producto,
+           p.descripcion_producto,
+           p.precioventaact_producto,
+           p.precioventaant_producto,
+           p.costoventa_producto,
+           p.margenutilidad_producto,
+           p.valoriva_producto,
+           c.descripcion_categoria,
+
+           -- Sede
+           s.id_sede,
+           s.nombre_sede,
+           s.direccion_sede,
+           s.telefono_sede,
+           ciu.nombre_ciudad,
+           dpto.nombre_dpto,
+           pais.nombre_pais,
+
+           -- Cliente (puede ser natural o jurídico)
+           cli.id_cliente,
+           cli.telefono_cliente,
+           cli.email_cliente,
+           cli.direccion_cliente,
+           cli.barrio_cliente,
+           cli.codigopostal_cliente,
+           tc.descripcion_tipocliente,
+           td.descripcion_tipodocumento,
+           cn.nombre_cliente,
+           cn.apellido_cliente,
+           cj.razonsocial_cliente,
+           cj.nombrecomercial_cliente,
+
+           -- Proveedor (última relación registrada)
+           prov.id_proveedor,
+           prov.nombre_proveedor,
+           prov.direccion_proveedor,
+           prov.telefono_proveedor,
+           prov.email_proveedor,
+           tp.nombre_tipoproveedor,
+           ciup.nombre_ciudad AS ciudad_proveedor,
+           dptop.nombre_dpto AS dpto_proveedor,
+           paisp.nombre_pais AS pais_proveedor
+
+    FROM inventariolocal_estado e
+    JOIN producto p ON e.id_producto = p.id_producto
+    JOIN categoria c ON p.id_categoria_producto = c.id_categoria
+    JOIN sede s ON e.id_sede = s.id_sede
+    JOIN ciudad ciu ON s.id_ciudad_sede = ciu.id_ciudad
+    JOIN departamento dpto ON ciu.id_dpto_ciudad = dpto.id_dpto
+    JOIN pais pais ON dpto.id_pais_dpto = pais.id_pais
+
+    -- Cliente (último movimiento)
+    LEFT JOIN cliente cli ON cli.id_cliente = (
+      SELECT id_cliente_movimiento
+      FROM movproducto m
+      WHERE m.id_producto_movimiento = e.id_producto
+        AND m.id_sede_movimiento = e.id_sede
+      ORDER BY m.fecha_movimiento DESC
+      LIMIT 1
+    )
+    LEFT JOIN tipocliente tc ON cli.id_tipocliente_cliente = tc.id_tipocliente
+    LEFT JOIN tipodocumento td ON cli.id_tipodocumento_cliente = td.id_tipodocumento
+    LEFT JOIN clientenatural cn ON cli.id_cliente = cn.id_cliente
+    LEFT JOIN clientejuridico cj ON cli.id_cliente = cj.id_cliente
+
+    -- Proveedor (último movimiento con proveedor)
+    LEFT JOIN LATERAL (
+      SELECT m.id_proveedor_movimiento
+      FROM movproducto m
+      WHERE m.id_producto_movimiento = e.id_producto
+        AND m.id_sede_movimiento = e.id_sede
+        AND m.id_proveedor_movimiento IS NOT NULL
+      ORDER BY m.fecha_movimiento DESC
+      LIMIT 1
+    ) ult_mp ON TRUE
+    LEFT JOIN proveedor prov ON prov.id_proveedor = ult_mp.id_proveedor_movimiento
+    LEFT JOIN tipoproveedor tp ON prov.id_tipoproveedor_proveedor = tp.id_tipoproveedor
+    LEFT JOIN ciudad ciup ON prov.id_ciudad_proveedor = ciup.id_ciudad
+    LEFT JOIN departamento dptop ON ciup.id_dpto_ciudad = dptop.id_dpto
+    LEFT JOIN pais paisp ON dptop.id_pais_dpto = paisp.id_pais
+  `);
+  return res.rows;
+}
+
+// Traer solo los productos de una sede en estados especiales
+export async function fetchBySedeEstado(sedeId) {
+  const res = await pool.query(
+    `
+    SELECT e.id,
+           e.estado,
+           e.cantidad,
+
+           -- Producto
+           p.id_producto,
+           p.nombre_producto,
+           p.descripcion_producto,
+           p.precioventaact_producto,
+           p.precioventaant_producto,
+           p.costoventa_producto,
+           p.margenutilidad_producto,
+           p.valoriva_producto,
+           c.descripcion_categoria,
+
+           -- Sede
+           s.id_sede,
+           s.nombre_sede,
+           s.direccion_sede,
+           s.telefono_sede,
+           ciu.nombre_ciudad,
+           dpto.nombre_dpto,
+           pais.nombre_pais,
+
+           -- Cliente
+           cli.id_cliente,
+           cli.telefono_cliente,
+           cli.email_cliente,
+           cli.direccion_cliente,
+           cli.barrio_cliente,
+           cli.codigopostal_cliente,
+           tc.descripcion_tipocliente,
+           td.descripcion_tipodocumento,
+           cn.nombre_cliente,
+           cn.apellido_cliente,
+           cj.razonsocial_cliente,
+           cj.nombrecomercial_cliente,
+
+           -- Proveedor
+           prov.id_proveedor,
+           prov.nombre_proveedor,
+           prov.direccion_proveedor,
+           prov.telefono_proveedor,
+           prov.email_proveedor,
+           tp.nombre_tipoproveedor,
+           ciup.nombre_ciudad AS ciudad_proveedor,
+           dptop.nombre_dpto AS dpto_proveedor,
+           paisp.nombre_pais AS pais_proveedor
+
+    FROM inventariolocal_estado e
+    JOIN producto p ON e.id_producto = p.id_producto
+    JOIN categoria c ON p.id_categoria_producto = c.id_categoria
+    JOIN sede s ON e.id_sede = s.id_sede
+    JOIN ciudad ciu ON s.id_ciudad_sede = ciu.id_ciudad
+    JOIN departamento dpto ON ciu.id_dpto_ciudad = dpto.id_dpto
+    JOIN pais pais ON dpto.id_pais_dpto = pais.id_pais
+
+    -- Cliente (último movimiento)
+    LEFT JOIN cliente cli ON cli.id_cliente = (
+      SELECT id_cliente_movimiento
+      FROM movproducto m
+      WHERE m.id_producto_movimiento = e.id_producto
+        AND m.id_sede_movimiento = e.id_sede
+      ORDER BY m.fecha_movimiento DESC
+      LIMIT 1
+    )
+    LEFT JOIN tipocliente tc ON cli.id_tipocliente_cliente = tc.id_tipocliente
+    LEFT JOIN tipodocumento td ON cli.id_tipodocumento_cliente = td.id_tipodocumento
+    LEFT JOIN clientenatural cn ON cli.id_cliente = cn.id_cliente
+    LEFT JOIN clientejuridico cj ON cli.id_cliente = cj.id_cliente
+
+    -- Proveedor (último movimiento con proveedor)
+    LEFT JOIN LATERAL (
+      SELECT m.id_proveedor_movimiento
+      FROM movproducto m
+      WHERE m.id_producto_movimiento = e.id_producto
+        AND m.id_sede_movimiento = e.id_sede
+        AND m.id_proveedor_movimiento IS NOT NULL
+      ORDER BY m.fecha_movimiento DESC
+      LIMIT 1
+    ) ult_mp ON TRUE
+    LEFT JOIN proveedor prov ON prov.id_proveedor = ult_mp.id_proveedor_movimiento
+    LEFT JOIN tipoproveedor tp ON prov.id_tipoproveedor_proveedor = tp.id_tipoproveedor
+    LEFT JOIN ciudad ciup ON prov.id_ciudad_proveedor = ciup.id_ciudad
+    LEFT JOIN departamento dptop ON ciup.id_dpto_ciudad = dptop.id_dpto
+    LEFT JOIN pais paisp ON dptop.id_pais_dpto = paisp.id_pais
+
+    WHERE e.id_sede = $1
+  `,
+    [sedeId]
+  );
+  return res.rows;
 }
