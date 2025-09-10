@@ -1,4 +1,4 @@
-import * as repo from "./inventarioLocal.repository.js";
+import * as repo from "./inventariolocal.repository.js";
 
 export async function getInventarioLocal(req, res) {
   try {
