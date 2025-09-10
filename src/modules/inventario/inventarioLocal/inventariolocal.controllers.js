@@ -1,4 +1,4 @@
-import * as service from "./inventarioLocal.service.js";
+import * as service from "./inventariolocal.service.js";
 
 export const getInventarioLocal = (req, res) =>
   service.getInventarioLocal(req, res);

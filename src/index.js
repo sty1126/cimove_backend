@@ -3,7 +3,7 @@ import cors from "cors";
 import { PORT } from "./config.js";
 import productosRoutes from "./modules/productos/productos.routes.js";
 import inventarioRoutes from "./modules/inventario/inventario.routes.js";
-import inventarioLocalRoutes from "./modules/inventario/inventarioLocal/inventariolocal.routes.js";
+import inventarioLocalRoutes from "./modules/inventario/inventarioLocal/inventariolocal.controllers.js";
 import categoriasRoutes from "./modules/categoria/categoria.routes.js";
 import sedesRoutes from "./modules/sedes/sedes.routes.js";
 import movimientoRoutes from "./modules/movimiento/movimiento.routes.js";
