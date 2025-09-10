@@ -33,10 +33,7 @@ import auditoriaRoutes from "./modules/auditoria/auditoria.routes.js";
 const app = express();
 
 // Configuración de CORS
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://cimove-frontend.onrender.com",
-];
+const allowedOrigins = ["https://cimove-frontend.onrender.com"];
 
 app.use(
   cors({
