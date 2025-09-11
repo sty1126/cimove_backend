@@ -12,12 +12,12 @@ export const obtenerClientes = async () => {
     JOIN TIPOCLIENTE TC ON TC.id_tipocliente = C.id_tipocliente_cliente
     LEFT JOIN CLIENTENATURAL CN ON CN.id_cliente = C.id_cliente
     LEFT JOIN CLIENTEJURIDICO CJ ON CJ.id_cliente = C.id_cliente
+    WHERE C.estado_cliente = 'A'
     ORDER BY C.id_cliente;
   `);
   return result.rows;
 };
 
-// Obtener clientes por id
 export const obtenerClientePorId = async (id) => {
   const result = await pool.query(
     `
@@ -30,13 +30,12 @@ export const obtenerClientePorId = async (id) => {
     JOIN TIPOCLIENTE TC ON TC.id_tipocliente = C.id_tipocliente_cliente
     LEFT JOIN CLIENTENATURAL CN ON CN.id_cliente = C.id_cliente
     LEFT JOIN CLIENTEJURIDICO CJ ON CJ.id_cliente = C.id_cliente
-    WHERE C.id_cliente = $1;
+    WHERE C.id_cliente = $1 AND C.estado_cliente = 'A';
   `,
     [id]
   );
   return result.rows[0];
 };
-
 
 export const findClientesNaturales = async () => {
   const result = await pool.query(`
@@ -49,12 +48,11 @@ export const findClientesNaturales = async () => {
     JOIN TIPOCLIENTE TC ON TC.id_tipocliente = C.id_tipocliente_cliente
     LEFT JOIN CLIENTENATURAL CN ON CN.id_cliente = C.id_cliente
     LEFT JOIN CLIENTEJURIDICO CJ ON CJ.id_cliente = C.id_cliente
-    WHERE C.id_tipocliente_cliente = 1
+    WHERE C.id_tipocliente_cliente = 1 AND C.estado_cliente = 'A'
     ORDER BY C.id_cliente;
   `);
   return result.rows;
 };
-
 
 export const findClientesJuridicos = async () => {
   const result = await pool.query(`
@@ -67,12 +65,11 @@ export const findClientesJuridicos = async () => {
     JOIN TIPOCLIENTE TC ON TC.id_tipocliente = C.id_tipocliente_cliente
     LEFT JOIN CLIENTENATURAL CN ON CN.id_cliente = C.id_cliente
     LEFT JOIN CLIENTEJURIDICO CJ ON CJ.id_cliente = C.id_cliente
-    WHERE C.id_tipocliente_cliente = 2
+    WHERE C.id_tipocliente_cliente = 2 AND C.estado_cliente = 'A'
     ORDER BY C.id_cliente;
   `);
   return result.rows;
 };
-
 
 export const findTiposCliente = async () => {
   const result = await pool.query(`
@@ -82,7 +79,6 @@ export const findTiposCliente = async () => {
   `);
   return result.rows;
 };
-
 
 export const findClientesFormateados = async () => {
   const result = await pool.query(`
@@ -95,6 +91,7 @@ export const findClientesFormateados = async () => {
     JOIN TIPOCLIENTE TC ON TC.id_tipocliente = C.id_tipocliente_cliente
     LEFT JOIN CLIENTENATURAL CN ON CN.id_cliente = C.id_cliente
     LEFT JOIN CLIENTEJURIDICO CJ ON CJ.id_cliente = C.id_cliente
+    WHERE C.estado_cliente = 'A'
     ORDER BY C.id_cliente;
   `);
   return result.rows;
@@ -102,7 +99,6 @@ export const findClientesFormateados = async () => {
 
 //Crear cliente
 export const crearCliente = async (clienteData) => {
-  
   const {
     id_cliente,
     id_tipodocumento_cliente,
@@ -113,7 +109,7 @@ export const crearCliente = async (clienteData) => {
     direccion_cliente,
     barrio_cliente,
     codigopostal_cliente,
-    estado_cliente = 'A',
+    estado_cliente = "A",
     nombre_cliente,
     apellido_cliente,
     fechanacimiento_cliente,
@@ -124,7 +120,7 @@ export const crearCliente = async (clienteData) => {
     digitoverificacion_cliente,
   } = clienteData;
 
-  const client = await pool.connect(); 
+  const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -154,9 +150,7 @@ export const crearCliente = async (clienteData) => {
     );
     console.log("✅ INSERT en CLIENTE exitoso");
 
-    
     if (id_tipocliente_cliente == 1) {
-
       await client.query(
         `
         INSERT INTO CLIENTENATURAL (
@@ -174,7 +168,6 @@ export const crearCliente = async (clienteData) => {
       );
       console.log("✅ INSERT en CLIENTENATURAL exitoso");
     } else if (id_tipocliente_cliente == 2) {
-     
       await client.query(
         `
         INSERT INTO CLIENTEJURIDICO (
@@ -190,20 +183,19 @@ export const crearCliente = async (clienteData) => {
           digitoverificacion_cliente,
         ]
       );
-      console.log("✅ INSERT en CLIENTEJURIDICO exitoso")
+      console.log("✅ INSERT en CLIENTEJURIDICO exitoso");
     }
 
     await client.query("COMMIT");
-    
+
     return { success: true, id: id_cliente };
-    
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("❌ ERROR en repository crearCliente:", error.message);
     console.error("Stack:", error.stack);
     throw error;
   } finally {
-    client.release(); 
+    client.release();
   }
 };
 
@@ -216,7 +208,7 @@ export const actualizarCliente = async (id, clienteData) => {
     direccion_cliente,
     barrio_cliente,
     codigopostal_cliente,
-    estado_cliente = 'A', // Valor por defecto
+    estado_cliente = "A", // Valor por defecto
     nombre_cliente,
     apellido_cliente,
     fechanacimiento_cliente,
@@ -231,7 +223,6 @@ export const actualizarCliente = async (id, clienteData) => {
   try {
     await pool.query("BEGIN");
 
-    
     await pool.query(
       `
       UPDATE CLIENTE SET 
@@ -263,7 +254,13 @@ export const actualizarCliente = async (id, clienteData) => {
           nombre_cliente=$1, apellido_cliente=$2, fechanacimiento_cliente=$3, genero_cliente=$4
         WHERE id_cliente=$5
         `,
-        [nombre_cliente, apellido_cliente, fechanacimiento_cliente, genero_cliente, id]
+        [
+          nombre_cliente,
+          apellido_cliente,
+          fechanacimiento_cliente,
+          genero_cliente,
+          id,
+        ]
       );
     } else if (id_tipocliente_cliente == 2) {
       await pool.query(
@@ -295,9 +292,18 @@ export const eliminarCliente = async (id) => {
   try {
     await pool.query("BEGIN");
 
-    await pool.query("DELETE FROM CLIENTENATURAL WHERE id_cliente=$1", [id]);
-    await pool.query("DELETE FROM CLIENTEJURIDICO WHERE id_cliente=$1", [id]);
-    await pool.query("DELETE FROM CLIENTE WHERE id_cliente=$1", [id]);
+    await pool.query(
+      "UPDATE CLIENTENATURAL SET estado_cliente = 'I' WHERE id_cliente=$1",
+      [id]
+    );
+    await pool.query(
+      "UPDATE CLIENTEJURIDICO SET estado_cliente = 'I' WHERE id_cliente=$1",
+      [id]
+    );
+    await pool.query(
+      "UPDATE CLIENTE SET estado_cliente = 'I' WHERE id_cliente=$1",
+      [id]
+    );
 
     await pool.query("COMMIT");
     return { success: true, message: "Cliente eliminado exitosamente" };
@@ -305,4 +311,26 @@ export const eliminarCliente = async (id) => {
     await pool.query("ROLLBACK");
     throw error;
   }
+};
+
+// Obtener clientes por sede (solo activos)
+export const obtenerClientesPorSede = async (idSede) => {
+  const result = await pool.query(
+    `
+    SELECT 
+      C.*,
+      TC.descripcion_tipocliente,
+      CN.nombre_cliente, CN.apellido_cliente, CN.fechanacimiento_cliente, CN.genero_cliente,
+      CJ.razonsocial_cliente, CJ.nombrecomercial_cliente, CJ.representante_cliente, CJ.digitoverificacion_cliente
+    FROM CLIENTE C
+    JOIN TIPOCLIENTE TC ON TC.id_tipocliente = C.id_tipocliente_cliente
+    LEFT JOIN CLIENTENATURAL CN ON CN.id_cliente = C.id_cliente
+    LEFT JOIN CLIENTEJURIDICO CJ ON CJ.id_cliente = C.id_cliente
+    WHERE C.id_sede_cliente = $1 
+      AND C.estado_cliente = 'A'
+    ORDER BY C.id_cliente;
+    `,
+    [idSede]
+  );
+  return result.rows;
 };

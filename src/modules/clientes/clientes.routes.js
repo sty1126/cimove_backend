@@ -8,19 +8,20 @@ import {
   getTiposCliente,
   updateCliente,
   createCliente,
-  deleteCliente
+  deleteCliente,
+  getClientesPorSede,
 } from "./clientes.controllers.js";
 
 const router = Router();
 
-
 router.get("/", getClientes);
 router.get("/formateados", getClientesFormateados);
-router.delete("/eliminar/:id", deleteCliente);
+router.put("/eliminar/:id", deleteCliente);
 router.get("/naturales", getClientesNaturales);
 router.get("/juridicos", getClientesJuridicos);
 router.get("/tipos-cliente", getTiposCliente);
-router.get("/:id", getClienteById); 
+router.get("/:id", getClienteById);
+router.get("/sede/:idSede", getClientesPorSede);
 
 router.post("/", createCliente);
 router.put("/:id", updateCliente);

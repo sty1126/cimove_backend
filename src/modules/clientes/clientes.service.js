@@ -1,7 +1,6 @@
 import * as repository from "./clientes.repository.js";
 import { pool } from "../../db.js";
 
-
 // Obtener todos los clientes
 export const getClientes = async () => {
   try {
@@ -57,19 +56,35 @@ export const createCliente = async (clienteData) => {
   try {
     console.log("📥 Datos recibidos en el servicio para crear:", clienteData);
 
-    const { id_cliente, id_tipodocumento_cliente, id_tipocliente_cliente, telefono_cliente, id_sede_cliente } = clienteData;
+    const {
+      id_cliente,
+      id_tipodocumento_cliente,
+      id_tipocliente_cliente,
+      telefono_cliente,
+      id_sede_cliente,
+    } = clienteData;
 
-    if (!id_cliente || !id_tipodocumento_cliente || !id_tipocliente_cliente || !telefono_cliente || !id_sede_cliente) {
-      throw new Error("Faltan campos obligatorios: id_cliente, id_tipodocumento_cliente, id_tipocliente_cliente, telefono_cliente, id_sede_cliente");
+    if (
+      !id_cliente ||
+      !id_tipodocumento_cliente ||
+      !id_tipocliente_cliente ||
+      !telefono_cliente ||
+      !id_sede_cliente
+    ) {
+      throw new Error(
+        "Faltan campos obligatorios: id_cliente, id_tipodocumento_cliente, id_tipocliente_cliente, telefono_cliente, id_sede_cliente"
+      );
     }
-
 
     const datosCompletos = {
       ...clienteData,
-      estado_cliente: clienteData.estado_cliente || 'A' 
+      estado_cliente: clienteData.estado_cliente || "A",
     };
 
-     console.log("📋 Datos que se enviarán al repository:", JSON.stringify(datosCompletos, null, 2));
+    console.log(
+      "📋 Datos que se enviarán al repository:",
+      JSON.stringify(datosCompletos, null, 2)
+    );
 
     return await repository.crearCliente(datosCompletos);
   } catch (error) {
@@ -104,18 +119,20 @@ export const getClientesFormateados = async () => {
   }
 };
 
-// Actualizar cliente 
+// Actualizar cliente
 export const updateCliente = async (id, clienteData) => {
   const client = await pool.connect();
 
   try {
-    console.log(`📥 Datos recibidos en el servicio para actualizar cliente ${id}:`, clienteData);
+    console.log(
+      `📥 Datos recibidos en el servicio para actualizar cliente ${id}:`,
+      clienteData
+    );
     await client.query("BEGIN");
 
-    
     const datosActualizados = {
       ...clienteData,
-      estado_cliente: clienteData.estado_cliente || 'A' 
+      estado_cliente: clienteData.estado_cliente || "A",
     };
 
     await repository.actualizarCliente(id, datosActualizados);
@@ -136,5 +153,35 @@ export const deleteCliente = async (id) => {
     return await repository.eliminarCliente(id);
   } catch (error) {
     throw new Error(`Error al eliminar cliente: ${error.message}`);
+  }
+};
+
+// Obtener clientes por sede
+export const getClientesPorSede = async (idSede) => {
+  try {
+    if (!idSede) {
+      throw new Error("Se requiere el ID de la sede");
+    }
+    const clientes = await repository.obtenerClientesPorSede(idSede);
+
+    if (!Array.isArray(clientes)) {
+      throw new Error("La consulta no devolvió un array.");
+    }
+
+    return clientes.map((cliente) => ({
+      id: cliente.id_cliente,
+      nombre:
+        cliente.descripcion_tipocliente === "Persona Natural"
+          ? `${cliente.nombre_cliente} ${cliente.apellido_cliente}`
+          : cliente.representante_cliente,
+      razon_social:
+        cliente.descripcion_tipocliente === "Persona Jurídica"
+          ? cliente.razonsocial_cliente
+          : "No aplica",
+      tipo: cliente.descripcion_tipocliente === "Persona Jurídica" ? "J" : "N",
+      id_sede: cliente.id_sede_cliente,
+    }));
+  } catch (error) {
+    throw new Error(`Error al obtener clientes por sede: ${error.message}`);
   }
 };

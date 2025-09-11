@@ -22,6 +22,22 @@ export const getClientesNaturales = async (req, res) => {
   }
 };
 
+// Obtener clientes por sede
+export const getClientesPorSede = async (req, res) => {
+  try {
+    const { idSede } = req.params; // asumimos que se pasa como parámetro en la URL
+    if (!idSede) {
+      return res.status(400).json({ error: "Se requiere el ID de la sede" });
+    }
+
+    const clientes = await service.getClientesPorSede(idSede);
+    res.json(clientes);
+  } catch (error) {
+    console.error("❌ Error en getClientesPorSede:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Obtener clientes jurídicos
 export const getClientesJuridicos = async (req, res) => {
   try {
@@ -87,12 +103,15 @@ export const getClientesFormateados = async (req, res) => {
 export const updateCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`📥 Datos recibidos en el controlador para actualizar cliente ${id}:`, req.body);
+    console.log(
+      `📥 Datos recibidos en el controlador para actualizar cliente ${id}:`,
+      req.body
+    );
     const result = await service.updateCliente(id, req.body);
     res.status(200).json(result);
   } catch (error) {
-   // console.error("❌ Error en updateCliente:", error);
-    res.status(400).json({ error: error.message }); 
+    // console.error("❌ Error en updateCliente:", error);
+    res.status(400).json({ error: error.message });
   }
 };
 
