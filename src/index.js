@@ -21,7 +21,6 @@ import tiposUsuarioRoutes from "./modules/tipos/tiposUsuario/tiposUsuario.routes
 import tipoclienteRoutes from "./modules/tipos/tiposCliente/tiposCliente.routes.js";
 import metodoPagoRoutes from "./modules/metodosPago/metodosPago.routes.js";
 import tipoMetodoPagoRoutes from "./modules/tipos/tiposMetodoPago/tiposMetodoPago.routes.js";
-import facturaElectronicaRoutes from "./modules/facturas/electronica/facturaElectronica.routes.js";
 import facturaRoutes from "./modules/facturas/factura.routes.js";
 import servicioTecnicoRoutes from "./modules/servicioTecnico/servicioTecnico.routes.js";
 import usuarioRoutes from "./modules/usuario/usuario.routes.js";
@@ -33,7 +32,7 @@ import auditoriaRoutes from "./modules/auditoria/auditoria.routes.js";
 const app = express();
 
 // Configuración de CORS
-const allowedOrigins = ["https://cimove-frontend.onrender.com"];
+const allowedOrigins = ["http://localhost:3000", "https://cimove-frontend.onrender.com"];
 
 app.use(
   cors({
@@ -76,7 +75,6 @@ app.use("/api/tipousuario", tiposUsuarioRoutes);
 app.use("/api/tipocliente", tipoclienteRoutes);
 app.use("/api/metodospago", metodoPagoRoutes);
 app.use("/api/tipometodopago", tipoMetodoPagoRoutes);
-app.use("/api/factura-electronica", facturaElectronicaRoutes);
 app.use("/api/factura", facturaRoutes);
 app.use("/api/serviciotecnico", servicioTecnicoRoutes);
 app.use("/api/usuario", usuarioRoutes);
