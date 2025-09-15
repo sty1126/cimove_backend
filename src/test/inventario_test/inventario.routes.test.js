@@ -34,9 +34,9 @@ class InventarioRoutesTest {
     console.log("🧪 Verificando rutas de inventario...");
   
     const expectedRoutes = [
-      { path: "/inventario", methods: ["get"] },
-      { path: "/inventario/:inventarioId", methods: ["get", "put"] },
-      { path: "/inventario", methods: ["post"] },
+      { path: "/", methods: ["get"] },
+      { path: "/:inventarioId", methods: ["get", "put"] },
+      { path: "/", methods: ["post"] },
     ];
   
     expectedRoutes.forEach((expected) => {

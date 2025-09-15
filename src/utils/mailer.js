@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Añade verificación de conexión
+
 transporter.verify(function (error, success) {
   if (error) {
     console.log("❌ Error de conexión con servidor de correo:", error);
@@ -43,11 +43,12 @@ export async function enviarCorreoNotificacion(notificacion) {
     notificacion.FECHAINICIO_NOTIFICACION ||
     new Date();
 
+ 
   //console.log("📝 Datos finales para el correo:", { titulo, mensaje, fecha });
 
   const info = await transporter.sendMail({
     from: '"Sistema de Notificaciones" <kpershopcimove@gmail.com>',
-    to: "kpershopcimove@gmail.com",
+    to: 'kpershopcimove@gmail.com',
     subject: `Nueva notificación: ${titulo}`,
     text: `
       📢 Notificación del sistema
@@ -61,14 +62,14 @@ export async function enviarCorreoNotificacion(notificacion) {
   return info;
 }
 
-//const BASE_URL = "https://cimove-frontend.onrender.com";
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://cimove-frontend.onrender.com/api";
+//const BASE_URL = "http://localhost:3000";
 export const sendPasswordResetEmail = async (email, token) => {
   const ResetPassword = `${BASE_URL}/reset-password?token=${token}`; //Si es para probar local no agregar otro /api
 
   const mailOptions = {
     from: '"Restablecer contraseña - CIMOVE" <kpershopcimove@gmail.com>',
-    to: "sarah26abril@gmail.com",
+    to: email,
     subject: "Restablecimiento de Contraseña",
     html: `
       <h2>Restablecimiento de Contraseña</h2>

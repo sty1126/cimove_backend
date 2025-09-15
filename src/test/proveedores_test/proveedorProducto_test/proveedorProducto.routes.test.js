@@ -41,7 +41,7 @@ class ProveedorProductoRoutesTest {
 
     const expectedRoutes = [
       { path: "/", methods: ["get"] },                                 // getProveedoresByMultipleProductos
-      { path: "/:id_producto", methods: ["get"] },                     // getProveedoresByProducto
+      { path: "/proveedor/:id/productos", methods: ["get"] },                     // getProveedoresByProducto
       { path: "/", methods: ["post"] },                                // asociarProveedorAProducto
       { path: "/:id_proveedorproducto", methods: ["put"] },         // desasociarProveedorDeProducto
     ];

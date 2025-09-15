@@ -34,7 +34,7 @@ class CiudadesRoutesTest {
     console.log("🧪 Verificando rutas de ciudades...");
 
     const expectedRoutes = [
-      { path: "/ciudades", methods: ["get"] },
+      { path: "/", methods: ["get"] },
     ];
 
     expectedRoutes.forEach((expected) => {

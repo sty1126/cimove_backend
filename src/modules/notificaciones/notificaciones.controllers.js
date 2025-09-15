@@ -18,7 +18,7 @@ export const createNotificacion = (req, res) =>
   repo
     .insertNotificacion(req.body)
     .then((row) => {
-      // Enviar email después de crear la notificación
+      
       enviarCorreoNotificacion(row)
         .then(() => console.log("Correo enviado con éxito."))
         .catch((err) => console.error("Error al enviar el correo:", err));
@@ -26,7 +26,6 @@ export const createNotificacion = (req, res) =>
       res.json(row);
     })
     .catch((err) => res.status(500).json({ error: err.message }));
-
 export const updateNotificacion = (req, res) =>
   repo
     .updateNotificacion(req.params.id, req.body)

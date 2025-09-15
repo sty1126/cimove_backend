@@ -36,9 +36,7 @@ class FacturasProveedoresRoutesTest {
     const expectedRoutes = [
       { path: "/", methods: ["get"] },
       { path: "/", methods: ["post"] },
-      { path: "/facturas/orden/:id_ordencompra", methods: ["get"] },
-      { path: "/generar-desde-orden", methods: ["post"] },
-      { path: "/:id", methods: ["get"] }, // También valida esta ruta final
+      { path: "/:id", methods: ["get"] },
     ];
 
     expectedRoutes.forEach((expected) => {

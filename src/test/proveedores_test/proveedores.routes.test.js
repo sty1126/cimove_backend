@@ -40,8 +40,8 @@ class ProveedoresRoutesTest {
       { path: "/", methods: ["post"] },                           // createProveedor
       { path: "/:id", methods: ["put"] },                         // updateProveedor
       { path: "/eliminar/:id", methods: ["put"] },                // deleteProveedor
-      { path: "/proveedores/tipos", methods: ["get"] },           // getTiposProveedores
-      { path: "/proveedores/tipos", methods: ["post"] },          // createTipoProveedor
+      { path: "/tipos", methods: ["get"] },           // getTiposProveedores
+      { path: "/tipos", methods: ["post"] },          // createTipoProveedor
     ];
 
     expectedRoutes.forEach((expected) => {

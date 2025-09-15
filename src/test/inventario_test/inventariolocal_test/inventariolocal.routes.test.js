@@ -38,7 +38,7 @@ class InventarioLocalRoutesTest {
       { path: "/sede/:sedeId", methods: ["get"] },
       { path: "/existe/:idProducto/:idSede", methods: ["get"] },
       { path: "/", methods: ["post"] },
-      { path: "/:inventariolocalId", methods: ["put"] },
+      { path: "/:inventarioLocalId", methods: ["put"] },
       { path: "/:idProducto/:idSede/ajustar", methods: ["patch"] },
     ];
 
