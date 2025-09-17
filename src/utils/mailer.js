@@ -1,30 +1,14 @@
-import nodemailer from "nodemailer";
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
-// Configura para el servicio de Gmail
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  host: "smtp.gmail.com",
-  port: "465",
-  secure: true,
-  auth: {
-    user: "kpershopcimove@gmail.com",
-    pass: "bpsv rvrd mzvm kmfs", // Contraseña de aplicación
-  },
+// Configura para el servicio
+const mailerSend = new MailerSend({
+  apiKey: "mlsn.21dca94af3f83ea5ee9a2b7a709ed822a3a80a3285b2a36c846987037997f8be" // 🔑 API Key
 });
 
+const sentFrom = new Sender("MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net", "CIMOVE - Notificaciones");
 
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log("❌ Error de conexión con servidor de correo:", error);
-  } else {
-    //console.log("✅ Servidor de correo listo para enviar mensajes");
-  }
-});
 
 export async function enviarCorreoNotificacion(notificacion) {
-  //console.log("📧 Entrando a enviarCorreoNotificacion...");
-  //console.log("📦 Notificación recibida:", notificacion);
-
   const titulo =
     notificacion.titulo ||
     notificacion.nombre_notificacion ||
@@ -43,41 +27,52 @@ export async function enviarCorreoNotificacion(notificacion) {
     notificacion.FECHAINICIO_NOTIFICACION ||
     new Date();
 
- 
-  //console.log("📝 Datos finales para el correo:", { titulo, mensaje, fecha });
+  const recipients = [
+    new Recipient("kpershopcimove@gmail.com", "Usuario destino"), 
+  ];
 
-  const info = await transporter.sendMail({
-    from: '"Sistema de Notificaciones" <kpershopcimove@gmail.com>',
-    to: 'kpershopcimove@gmail.com',
-    subject: `Nueva notificación: ${titulo}`,
-    text: `
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject(`CIMOVE - Nueva notificación: ${titulo}`)
+    .setHtml(`
+      <h3>📢 Notificación del sistema</h3>
+      <p><b>Mensaje:</b> ${mensaje}</p>
+      <p><b>Fecha de creación:</b> ${fecha}</p>
+    `)
+    .setText(`
       📢 Notificación del sistema
 
       Mensaje: ${mensaje}
       Fecha de creación: ${fecha}
-    `,
-  });
+    `);
 
-  //console.log("✅ Correo enviado con éxito:", info.messageId);
-  return info;
+  return await mailerSend.email.send(emailParams);
 }
-
 const BASE_URL = "https://cimove-frontend.onrender.com/api";
-//const BASE_URL = "http://localhost:3000";
+//const BASE_URL = "http://localhost:3000"; //Si es para probar en local se quita el /api únicamente para esta ruta.
 export const sendPasswordResetEmail = async (email, token) => {
-  const ResetPassword = `${BASE_URL}/reset-password?token=${token}`; //Si es para probar local no agregar otro /api
+  const resetPasswordUrl = `${BASE_URL}/reset-password?token=${token}`;
 
-  const mailOptions = {
-    from: '"Restablecer contraseña - CIMOVE" <kpershopcimove@gmail.com>',
-    to: email,
-    subject: "Restablecimiento de Contraseña",
-    html: `
+  const recipients = [new Recipient(email, "Usuario")];
+
+  const emailParams = new EmailParams()
+    .setFrom(new Sender("MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net", "CIMOVE - Soporte"))
+    .setTo(recipients)
+    .setSubject("Restablecimiento de Contraseña")
+    .setHtml(`
       <h2>Restablecimiento de Contraseña</h2>
       <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-      <a href="${ResetPassword}">Restablecer Contraseña</a>
+      <a href="${resetPasswordUrl}">Restablecer Contraseña</a>
       <p>Este enlace expirará en una hora.</p>
-    `,
-  };
+    `)
+    .setText(`
+      Restablecimiento de Contraseña
 
-  await transporter.sendMail(mailOptions);
+      Has solicitado restablecer tu contraseña.
+      Enlace: ${resetPasswordUrl}
+      Este enlace expirará en una hora.
+    `);
+
+  return await mailerSend.email.send(emailParams);
 };
