@@ -258,24 +258,30 @@ export async function insertMovimiento(data) {
     };
 
     await client.query(
-      `INSERT INTO AUDITORIA (
-     TABLAAFECTADA_AUDITORIA,
-     OPERACION_AUDITORIA,
-     FECHAOPERACION_AUDITORIA,
-     ID_USUARIO_AUDITORIA,
-     DETALLESCAMBIO_AUDITORIA,
-     ID_SEDE_AUDITORIA,
-     ID_TIPOMOV_AUDITORIA
-   ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [
-        "MOVPRODUCTO",
-        "INSERT",
-        FECHA_MOVIMIENTO,
-        data.ID_USUARIO,
-        JSON.stringify(detalleCambio),
-        ID_SEDE_MOVIMIENTO,
-        ID_TIPOMOV_MOVIMIENTO,
-      ]
+      ` INSERT INTO AUDITORIA (
+    TABLAAFECTADA_AUDITORIA,
+    OPERACION_AUDITORIA,
+    ID_USUARIO_AUDITORIA,
+    DETALLESCAMBIO_AUDITORIA,
+    FECHAOPERACION_AUDITORIA,
+    ID_SEDE_AUDITORIA,
+    ID_TIPOMOV_AUDITORIA
+  )
+  VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6)`,
+     [
+    "MOVPRODUCTO", // Tabla afectada
+    "INSERT", // Operación
+    data.ID_USUARIO, // Usuario que hizo el cambio
+    JSON.stringify({
+      idProducto: data.ID_PRODUCTO_MOVIMIENTO,
+      cantidad: data.CANTIDAD_MOVIMIENTO,
+      idSede: data.ID_SEDE_MOVIMIENTO,
+      idCliente: data.ID_CLIENTE_MOVIMIENTO || null,
+      idProveedor: data.ID_PROVEEDOR_MOVIMIENTO || null,
+    }),
+    data.ID_SEDE_MOVIMIENTO, // sede origen
+    data.ID_TIPOMOV_MOVIMIENTO, // tipo de movimiento
+  ]
     );
 
     await client.query("COMMIT");

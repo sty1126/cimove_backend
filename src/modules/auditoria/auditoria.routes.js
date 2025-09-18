@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getAuditoriasController } from "./auditoria.controller.js";
+import { 
+  getAuditoriasController, 
+  registrarAuditoriaController 
+} from "./auditoria.controller.js";
 
 const router = Router();
 
@@ -13,7 +16,10 @@ router.get("/usuario/:idUsuario", getAuditoriasController);
 router.get("/tipomov/:idTipoMov", getAuditoriasController);
 
 // Filtros por fechas
-// Ejemplo: /fechas?fechaInicio=2025-01-01&fechaFin=2025-09-01
+// Ejemplo: /auditorias/fechas?fechaInicio=2025-01-01&fechaFin=2025-09-01
 router.get("/fechas", getAuditoriasController);
+
+// Registrar nueva acción de auditoría
+router.post("/", registrarAuditoriaController);
 
 export default router;
