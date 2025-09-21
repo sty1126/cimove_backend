@@ -117,5 +117,10 @@ export const OrdenesCompraService = {
     } finally {
       client.release();
     }
+  },
+  
+    async eliminarOrdenCompra(id) {
+    const result = await OrdenesCompraRepository.eliminarOrden(id);
+    return result.rows[0] || null;
   }
 };

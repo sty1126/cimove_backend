@@ -292,26 +292,37 @@ export const eliminarCliente = async (id) => {
   try {
     await pool.query("BEGIN");
 
+    // Primero actualizar en CLIENTE
+    const { rows } = await pool.query(
+      "UPDATE CLIENTE SET estado_cliente = 'I' WHERE id_cliente=$1 RETURNING *",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      await pool.query("ROLLBACK");
+      return null; // <- no encontró el cliente
+    }
+
+    // Si es Persona Natural
     await pool.query(
       "UPDATE CLIENTENATURAL SET estado_cliente = 'I' WHERE id_cliente=$1",
       [id]
     );
+
+    // Si es Persona Jurídica
     await pool.query(
       "UPDATE CLIENTEJURIDICO SET estado_cliente = 'I' WHERE id_cliente=$1",
       [id]
     );
-    await pool.query(
-      "UPDATE CLIENTE SET estado_cliente = 'I' WHERE id_cliente=$1",
-      [id]
-    );
 
     await pool.query("COMMIT");
-    return { success: true, message: "Cliente eliminado exitosamente" };
+    return rows[0]; // devolvemos el cliente actualizado
   } catch (error) {
     await pool.query("ROLLBACK");
     throw error;
   }
 };
+
 
 // Obtener clientes por sede (solo activos)
 export const obtenerClientesPorSede = async (idSede) => {

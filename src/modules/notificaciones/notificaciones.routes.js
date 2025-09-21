@@ -24,13 +24,6 @@ router.post("/", createNotificacion); // Crear
 router.put("/:id", updateNotificacion); // Actualizar
 router.put("/:id/inactivar", inactivarNotificacion); // Inactivar
 
-// NOTA: Las siguientes funciones se manejan con query params directamente en la ruta principal `/notificaciones`
-// Ejemplos:
-// - /notificaciones?estado=P
-// - /notificaciones?urgencia=U
-// - /notificaciones?fecha=<hoy>
-// - /notificaciones?fechaInicio=2025-08-01&fechaFin=2025-08-20
-
 router.get("/test-email", async (req, res) => {
   try {
     const testNotificacion = {

@@ -115,14 +115,18 @@ export const updateCliente = async (req, res) => {
   }
 };
 
-// Eliminar cliente
 export const deleteCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await service.deleteCliente(id);
-    res.status(200).json(result);
+    const eliminado = await service.deleteCliente(id);
+
+    if (!eliminado) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    }
+
+    res.json({ message: "Cliente eliminado correctamente", eliminado });
   } catch (error) {
     console.error("❌ Error en deleteCliente:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };

@@ -40,3 +40,14 @@ export const procesarPedidoCarrito = async (req, res) => {
     res.status(500).json({ error: "Error al procesar pedido" });
   }
 };
+
+export const deleteOrdenCompra = async (req, res) => {
+  try {
+    const eliminada = await OrdenesCompraService.eliminarOrdenCompra(req.params.id);
+    if (!eliminada) return res.status(404).json({ error: "Orden no encontrada" });
+    res.json({ message: "Orden de compra eliminada correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar orden:", error);
+    res.status(500).json({ error: "Error al eliminar orden" });
+  }
+};

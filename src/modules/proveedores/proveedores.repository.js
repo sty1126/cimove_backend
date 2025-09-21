@@ -6,6 +6,7 @@ export const ProveedoresRepository = {
       SELECT p.*, tp.NOMBRE_TIPOPROVEEDOR
       FROM PROVEEDOR p
       INNER JOIN TIPOPROVEEDOR tp ON p.ID_TIPOPROVEEDOR_PROVEEDOR = tp.ID_TIPOPROVEEDOR
+      WHERE p.ESTADO_PROVEEDOR = 'A'
     `);
   },
 
@@ -14,7 +15,7 @@ export const ProveedoresRepository = {
       `SELECT p.*, tp.NOMBRE_TIPOPROVEEDOR
        FROM PROVEEDOR p
        INNER JOIN TIPOPROVEEDOR tp ON p.ID_TIPOPROVEEDOR_PROVEEDOR = tp.ID_TIPOPROVEEDOR
-       WHERE p.ID_PROVEEDOR = $1`,
+       WHERE p.ID_PROVEEDOR = $1 AND p.ESTADO_PROVEEDOR = 'A'`,
       [id]
     );
   },
@@ -94,10 +95,12 @@ export const ProveedoresRepository = {
     );
   },
 
-  eliminarProveedor(id) {
-    return pool.query(
-      "UPDATE PROVEEDOR SET ESTADO_PROVEEDOR = 'I' WHERE ID_PROVEEDOR = $1 RETURNING *",
-      [id]
-    );
-  },
+eliminarProveedor(id) {
+  return pool.query(
+    "UPDATE PROVEEDOR SET ESTADO_PROVEEDOR = 'I' WHERE ID_PROVEEDOR = $1 RETURNING *",
+    [id]
+  );
+},
+
+
 };

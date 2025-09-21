@@ -35,9 +35,10 @@ export const ProveedoresService = {
     const { rows } = await ProveedoresRepository.actualizarProveedor(id, datos);
     return rows[0] || null;
   },
+  
+async eliminarProveedor(id) {
+  const { rows } = await ProveedoresRepository.eliminarProveedor(id);
+  return rows[0] || null;
+}
 
-  async eliminarProveedor(id) {
-    const { rows } = await ProveedoresRepository.eliminarProveedor(id);
-    return rows[0] || null;
-  },
 };

@@ -147,14 +147,15 @@ export const updateCliente = async (id, clienteData) => {
   }
 };
 
-// Eliminar cliente
 export const deleteCliente = async (id) => {
   try {
-    return await repository.eliminarCliente(id);
+    const eliminado = await repository.eliminarCliente(id);
+    return eliminado; // null si no existe
   } catch (error) {
     throw new Error(`Error al eliminar cliente: ${error.message}`);
   }
 };
+
 
 // Obtener clientes por sede
 export const getClientesPorSede = async (idSede) => {
