@@ -2,7 +2,7 @@ import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
 // Configura para el servicio
 const mailerSend = new MailerSend({
-  apiKey: "mlsn.21dca94af3f83ea5ee9a2b7a709ed822a3a80a3285b2a36c846987037997f8be" // 🔑 API Key
+  apiKey: process.env.MAILERSEND_API_KEY, // 🔑 API Key desde .env
 });
 
 const sentFrom = new Sender("MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net", "CIMOVE - Notificaciones");
