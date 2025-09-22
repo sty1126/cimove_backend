@@ -1,0 +1,33 @@
+config:
+  target: "http://localhost:3000"   #prueba local
+  phases:
+    - duration: 60   # 1 minuto con 10 usuarios
+      arrivalRate: 10
+      name: "Prueba con 10 usuarios"
+    - duration: 60   # 1 minuto con 15 usuarios
+      arrivalRate: 15
+      name: "Prueba con 15 usuarios"
+    - duration: 60   # 1 minuto con 20 usuarios
+      arrivalRate: 20
+      name: "Prueba con 20 usuarios"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Escenario de uso típico"
+    flow:
+      - get:
+          url: "/api/productos"    # endpoints concurrentes
+      - post:
+          url: "/api/productos"
+          json:
+            nombre: "Producto prueba"
+            precio: 1000
+      - get:
+          url: "/api/proveedores"
+      - post:
+          url: "/api/proveedores"
+          json:
+            nombre: "Proveedor prueba"
+            contacto: "contacto@correo.com"
