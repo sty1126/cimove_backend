@@ -5,8 +5,10 @@ const mailerSend = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY, // 🔑 API Key desde .env
 });
 
-const sentFrom = new Sender("MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net", "CIMOVE - Notificaciones");
-
+const sentFrom = new Sender(
+  "MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net",
+  "CIMOVE - Notificaciones"
+);
 
 export async function enviarCorreoNotificacion(notificacion) {
   const titulo =
@@ -28,19 +30,17 @@ export async function enviarCorreoNotificacion(notificacion) {
     new Date();
 
   const recipients = [
-    new Recipient("kpershopcimove@gmail.com", "Usuario destino"), 
+    new Recipient("kpershopcimove@gmail.com", "Usuario destino"),
   ];
 
   const emailParams = new EmailParams()
     .setFrom(sentFrom)
     .setTo(recipients)
-    .setSubject(`CIMOVE - Nueva notificación: ${titulo}`)
-    .setHtml(`
+    .setSubject(`CIMOVE - Nueva notificación: ${titulo}`).setHtml(`
       <h3>📢 Notificación del sistema</h3>
       <p><b>Mensaje:</b> ${mensaje}</p>
       <p><b>Fecha de creación:</b> ${fecha}</p>
-    `)
-    .setText(`
+    `).setText(`
       📢 Notificación del sistema
 
       Mensaje: ${mensaje}
@@ -49,7 +49,7 @@ export async function enviarCorreoNotificacion(notificacion) {
 
   return await mailerSend.email.send(emailParams);
 }
-const BASE_URL = "https://cimove-frontend.onrender.com/api";
+const BASE_URL = "https://cimove-frontend.onrender.com";
 //const BASE_URL = "http://localhost:3000"; //Si es para probar en local se quita el /api únicamente para esta ruta.
 export const sendPasswordResetEmail = async (email, token) => {
   const resetPasswordUrl = `${BASE_URL}/reset-password?token=${token}`;
@@ -57,16 +57,19 @@ export const sendPasswordResetEmail = async (email, token) => {
   const recipients = [new Recipient(email, "Usuario")];
 
   const emailParams = new EmailParams()
-    .setFrom(new Sender("MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net", "CIMOVE - Soporte"))
+    .setFrom(
+      new Sender(
+        "MS_XzTat2@test-p7kx4xwvw22g9yjr.mlsender.net",
+        "CIMOVE - Soporte"
+      )
+    )
     .setTo(recipients)
-    .setSubject("Restablecimiento de Contraseña")
-    .setHtml(`
+    .setSubject("Restablecimiento de Contraseña").setHtml(`
       <h2>Restablecimiento de Contraseña</h2>
       <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
       <a href="${resetPasswordUrl}">Restablecer Contraseña</a>
       <p>Este enlace expirará en una hora.</p>
-    `)
-    .setText(`
+    `).setText(`
       Restablecimiento de Contraseña
 
       Has solicitado restablecer tu contraseña.
