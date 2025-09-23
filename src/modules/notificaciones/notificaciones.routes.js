@@ -32,7 +32,6 @@ router.get("/test-email", async (req, res) => {
       fecha_creacion: new Date(),
     };
 
-    console.log("🧪 Probando envío de correo...");
     const result = await enviarCorreoNotificacion(testNotificacion);
 
     res.json({

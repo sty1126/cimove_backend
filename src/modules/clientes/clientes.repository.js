@@ -125,7 +125,6 @@ export const crearCliente = async (clienteData) => {
   try {
     await client.query("BEGIN");
 
-    //console.log("📦 Insertando en tabla CLIENTE...");
     // Insertar en CLIENTE
     await client.query(
       `
@@ -148,7 +147,6 @@ export const crearCliente = async (clienteData) => {
         estado_cliente,
       ]
     );
-    console.log("✅ INSERT en CLIENTE exitoso");
 
     if (id_tipocliente_cliente == 1) {
       await client.query(
@@ -166,7 +164,7 @@ export const crearCliente = async (clienteData) => {
           genero_cliente,
         ]
       );
-      console.log("✅ INSERT en CLIENTENATURAL exitoso");
+
     } else if (id_tipocliente_cliente == 2) {
       await client.query(
         `
@@ -183,7 +181,7 @@ export const crearCliente = async (clienteData) => {
           digitoverificacion_cliente,
         ]
       );
-      console.log("✅ INSERT en CLIENTEJURIDICO exitoso");
+
     }
 
     await client.query("COMMIT");
@@ -191,7 +189,7 @@ export const crearCliente = async (clienteData) => {
     return { success: true, id: id_cliente };
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("❌ ERROR en repository crearCliente:", error.message);
+    console.error("ERROR en repository crearCliente:", error.message);
     console.error("Stack:", error.stack);
     throw error;
   } finally {

@@ -54,8 +54,6 @@ export const getTiposCliente = async () => {
 
 export const createCliente = async (clienteData) => {
   try {
-    console.log("📥 Datos recibidos en el servicio para crear:", clienteData);
-
     const {
       id_cliente,
       id_tipodocumento_cliente,
@@ -81,14 +79,9 @@ export const createCliente = async (clienteData) => {
       estado_cliente: clienteData.estado_cliente || "A",
     };
 
-    console.log(
-      "📋 Datos que se enviarán al repository:",
-      JSON.stringify(datosCompletos, null, 2)
-    );
-
     return await repository.crearCliente(datosCompletos);
   } catch (error) {
-    console.error("❌ Error detallado en createCliente:", error);
+    console.error("Error detallado en createCliente:", error);
     throw new Error(`Error al crear cliente: ${error.message}`);
   }
 };
@@ -124,10 +117,6 @@ export const updateCliente = async (id, clienteData) => {
   const client = await pool.connect();
 
   try {
-    console.log(
-      `📥 Datos recibidos en el servicio para actualizar cliente ${id}:`,
-      clienteData
-    );
     await client.query("BEGIN");
 
     const datosActualizados = {

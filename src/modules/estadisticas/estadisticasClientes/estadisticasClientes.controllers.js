@@ -29,7 +29,7 @@ export const getMejoresClientesController = async (req, res) => {
 export const getClientesPorSedeController = async (req, res) => {
   try {
     const resultado = await clientesService.getClientesPorSede();
-    res.json(resultado); // ✅ aquí sí va el res.json
+    res.json(resultado); 
   } catch (error) {
     console.error("Error en getClientesPorSedeController:", error);
     res.status(500).json({ error: "Error al obtener clientes por sede" });

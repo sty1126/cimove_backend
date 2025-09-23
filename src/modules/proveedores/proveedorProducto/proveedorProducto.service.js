@@ -57,9 +57,6 @@ export const desasociarProveedor = async (id) => {
 };
 
 export const eliminarAsociacionPorIds = async (idProveedor, idProducto) => {
-  console.log("🔔 eliminarAsociacionPorIds llamada");
-  console.log("📌 IDs recibidos:", { idProveedor, idProducto });
-
   try {
     if (!idProveedor || !idProducto) {
       throw new Error("Se requieren los IDs del proveedor y producto");
@@ -67,7 +64,6 @@ export const eliminarAsociacionPorIds = async (idProveedor, idProducto) => {
     
     // Llamar a la función del repositorio
     const { rows } = await inactivarAsociacion(idProveedor, idProducto);
-    console.log("✅ Resultado inactivarAsociacion:", rows);
 
     if (rows.length === 0) {
       throw new Error("No se encontró la asociación o ya está inactiva");

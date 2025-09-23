@@ -97,27 +97,18 @@ export const desasociarProveedor = (id_proveedorproducto) => {
 };
 
 export const inactivarAsociacion = (id_proveedor, id_producto) => {
-  console.log("📦 inactivarAsociacion -> INICIO", { 
-    id_proveedor, 
-    id_producto,
-    tipo_proveedor: typeof id_proveedor,
-    tipo_producto: typeof id_producto 
-  });
-  
   try {
     // Aseguramos que id_producto sea un número si viene como string
     let productoId = id_producto;
     if (typeof id_producto === 'string') {
       productoId = id_producto.replace(/\D/g, ''); // Eliminar caracteres no numéricos
       productoId = parseInt(productoId, 10);
-      console.log("ID producto convertido:", productoId);
     }
     
     // Aseguramos que id_proveedor sea un string sin guiones
     let proveedorId = id_proveedor;
     if (typeof id_proveedor === 'string') {
       proveedorId = id_proveedor.replace(/\D/g, ''); // Eliminar caracteres no numéricos como guiones
-      console.log("ID proveedor normalizado:", proveedorId);
     }
     
     // Ejecutar la consulta SQL
@@ -130,16 +121,13 @@ export const inactivarAsociacion = (id_proveedor, id_producto) => {
        RETURNING *`,
       [proveedorId, productoId]
     ).then(result => {
-      console.log("📦 inactivarAsociacion -> Filas afectadas:", result.rowCount);
-      console.log("📦 inactivarAsociacion -> Datos retornados:", result.rows);
       return result;
     }).catch(err => {
-      console.error("📦 inactivarAsociacion -> ERROR SQL:", err.message);
-      console.error("📦 Detalles del error:", err);
+      console.error("inactivarAsociacion -> ERROR SQL:", err.message);
+      console.error("Detalles del error:", err);
       throw err;
     });
   } catch (err) {
-    console.error("❌ Error general en inactivarAsociacion:", err);
     throw err;
   }
 };

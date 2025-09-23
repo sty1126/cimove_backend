@@ -2,7 +2,7 @@ import axios from "axios";
 
 class ReportesRepository {
   constructor() {
-    this.baseURL = "http://localhost:4000";
+    this.baseURL = "https://cimove-backend.onrender.com";
   }
 
   formatDateForAPI(date) {

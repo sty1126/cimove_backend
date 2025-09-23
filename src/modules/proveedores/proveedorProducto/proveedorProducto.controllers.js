@@ -53,8 +53,6 @@ export const asociarProveedorAProducto = async (req, res) => {
 // PUT /:id_proveedorproducto
 export const eliminarAsociacion = async (req, res) => {
   try {
-    console.log("🔔 Llegue aqui");
-
     const result = await desasociarProveedor(req.params.id_proveedorproducto);
     if (!result) return res.status(404).json({ error: "Asociación no encontrada" });
     res.json({ message: "Proveedor desasociado correctamente" });
@@ -65,11 +63,7 @@ export const eliminarAsociacion = async (req, res) => {
 
 export const desasociarProveedorDeProducto = async (req, res) => {
   try {
-    console.log("🔔 Solicitud recibida en eliminarAsociacion:", req.body);
-
     const { id_proveedor, id_producto } = req.body;
-
-    console.log("📌 IDs extraídos:", { id_proveedor, id_producto });
 
     // Validar que lleguen los datos
     if (!id_proveedor || !id_producto) {
@@ -78,15 +72,12 @@ export const desasociarProveedorDeProducto = async (req, res) => {
 
     // Llamar al service para inactivar la asociación
     const resultado = await eliminarAsociacionPorIds(id_proveedor, id_producto);
-
-    console.log("✅ Resultado final de inactivarAsociacion:", resultado);
-
     res.json({ 
       message: "Asociación inactivada correctamente", 
       data: resultado 
     });
   } catch (error) {
-    console.error("❌ ERROR DETALLADO:", error);
+    console.error("ERROR DETALLADO:", error);
     
     // Devolver un error más descriptivo al cliente
     res.status(500).json({ 

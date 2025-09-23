@@ -3,7 +3,7 @@ import axios from "axios";
 
 class ReportesService {
   constructor() {
-    this.baseURL = "http://localhost:4000/api/estadisticas";
+    this.baseURL = "https://cimove-backend.onrender.com/api/estadisticas";
 
     this.fonts = {
       Roboto: {

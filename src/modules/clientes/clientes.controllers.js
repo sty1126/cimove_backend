@@ -33,7 +33,7 @@ export const getClientesPorSede = async (req, res) => {
     const clientes = await service.getClientesPorSede(idSede);
     res.json(clientes);
   } catch (error) {
-    console.error("❌ Error en getClientesPorSede:", error);
+    console.error("Error en getClientesPorSede:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -79,12 +79,10 @@ export const getTiposCliente = async (req, res) => {
 // Crear nuevo cliente
 export const createCliente = async (req, res) => {
   try {
-    //console.log("📥 Datos recibidos en el controlador para crear:", req.body);
     const result = await service.createCliente(req.body);
     res.status(201).json(result);
   } catch (error) {
-    //console.error("❌ Error en createCliente:", error);
-    res.status(400).json({ error: error.message }); // <-- devuelve mensaje real
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -103,14 +101,9 @@ export const getClientesFormateados = async (req, res) => {
 export const updateCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(
-      `📥 Datos recibidos en el controlador para actualizar cliente ${id}:`,
-      req.body
-    );
     const result = await service.updateCliente(id, req.body);
     res.status(200).json(result);
   } catch (error) {
-    // console.error("❌ Error en updateCliente:", error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -126,7 +119,7 @@ export const deleteCliente = async (req, res) => {
 
     res.json({ message: "Cliente eliminado correctamente", eliminado });
   } catch (error) {
-    console.error("❌ Error en deleteCliente:", error);
+    console.error("Error en deleteCliente:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };

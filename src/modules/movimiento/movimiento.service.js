@@ -28,7 +28,7 @@ export async function createMovimiento(req, res) {
       movimiento: nuevoMovimiento
     });
   } catch (error) {
-    console.error("❌ Error al agregar movimiento:", error);
+    console.error("Error al agregar movimiento:", error);
     res.status(error.status || 500).json({
       error: error.message || "Error interno del servidor"
     });
